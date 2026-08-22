@@ -131,25 +131,16 @@ sequenceDiagram
 
 ## Screenshots
 
-*Not yet added.* This session didn't have a browser/screenshot tool
-available, so these are placeholders rather than fabricated images — add
-real screenshots of the running app here:
+**Admin dashboard**
 
-1. Save images into [`docs/screenshots/`](docs/screenshots/) (already created, gitignored contents excluded only if you configure that — currently tracked).
-2. Reference them below, e.g.:
-   ```markdown
-   ![Employee dashboard](docs/screenshots/employee-dashboard.png)
-   ![Time off](docs/screenshots/time-off.png)
-   ![Payroll](docs/screenshots/payroll.png)
-   ![Admin analytics](docs/screenshots/admin-analytics.png)
-   ```
+![Admin dashboard](docs/screenshots/admin-dashboard.png)
 
-<!--
+More views (Employee dashboard, Time off, Payroll, Analytics) can be added
+the same way — save an image into [`docs/screenshots/`](docs/screenshots/)
+and reference it here:
+```markdown
 ![Employee dashboard](docs/screenshots/employee-dashboard.png)
-![Time off](docs/screenshots/time-off.png)
-![Payroll](docs/screenshots/payroll.png)
-![Admin analytics](docs/screenshots/admin-analytics.png)
--->
+```
 
 ## Quick start
 
