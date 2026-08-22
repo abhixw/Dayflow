@@ -131,6 +131,10 @@ sequenceDiagram
 
 ## Screenshots
 
+**Login**
+
+![Login](docs/screenshots/login.png)
+
 **Admin dashboard**
 
 ![Admin dashboard](docs/screenshots/admin-dashboard.png)
