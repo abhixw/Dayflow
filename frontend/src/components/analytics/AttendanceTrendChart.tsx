@@ -25,7 +25,7 @@ export function AttendanceTrendChart({ data }: { data: AttendanceTrendPoint[] })
               />
               <YAxis allowDecimals={false} tick={AXIS_TICK_STYLE} tickLine={false} axisLine={false} />
               <Tooltip
-                labelFormatter={(value: string) => formatDate(value)}
+                labelFormatter={(value: any) => formatDate(String(value))}
                 contentStyle={{ fontSize: 12, borderRadius: 8, borderColor: GRID_STROKE }}
               />
               <Legend wrapperStyle={{ fontSize: 12 }} />

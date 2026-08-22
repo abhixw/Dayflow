@@ -40,7 +40,7 @@ export function DepartmentBarChart({ title, data, valueFormatter, barColor = "#3
                 axisLine={false}
               />
               <Tooltip
-                formatter={(value: number) => (valueFormatter ? valueFormatter(value) : value)}
+                formatter={(value: any) => (valueFormatter ? valueFormatter(Number(value)) : value)}
                 contentStyle={{ fontSize: 12, borderRadius: 8, borderColor: GRID_STROKE }}
               />
               <Bar dataKey="value" fill={barColor} radius={[0, 4, 4, 0]} maxBarSize={24} />
