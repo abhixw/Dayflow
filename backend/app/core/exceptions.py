@@ -44,3 +44,7 @@ class LeaveNotPendingError(Exception):
 
 class PayrollNotFoundError(Exception):
     pass
+
+
+class NotificationNotFoundError(Exception):
+    pass

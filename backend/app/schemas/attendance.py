@@ -1,16 +1,13 @@
 import uuid
 from datetime import date, datetime
 
-from pydantic import BaseModel, ConfigDict
-
 from app.models.enums import AttendanceStatus
+from app.schemas.base import CamelModel
 
 
-class AttendanceOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
+class AttendanceOut(CamelModel):
     id: uuid.UUID
-    employee_id: uuid.UUID
+    employee_id: str
     date: date
     check_in: datetime | None
     check_out: datetime | None

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
-import { LayoutDashboard, User, Clock, Calendar, Wallet } from "lucide-react";
+import { LayoutDashboard, User, Clock, Calendar, Wallet, Bell, BarChart3 } from "lucide-react";
 import { Sidebar, type SidebarNavItem } from "@/components/layout/Sidebar";
 import { Topbar } from "@/components/layout/Topbar";
 import { ROUTES } from "@/utils/constants";
@@ -11,6 +11,8 @@ const navItems: SidebarNavItem[] = [
   { label: "Attendance", to: ROUTES.employeeAttendance, icon: Clock },
   { label: "Leave Requests", to: ROUTES.employeeLeaves, icon: Calendar },
   { label: "Payroll", to: ROUTES.employeePayroll, icon: Wallet },
+  { label: "Analytics", to: ROUTES.employeeAnalytics, icon: BarChart3 },
+  { label: "Notifications", to: ROUTES.employeeNotifications, icon: Bell },
 ];
 
 export default function EmployeeLayout() {

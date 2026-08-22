@@ -9,6 +9,8 @@ const payrollSchema = z.object({
   basicSalary: z.number({ error: "Enter a number" }).nonnegative("Must be zero or greater"),
   allowances: z.number({ error: "Enter a number" }).nonnegative("Must be zero or greater"),
   deductions: z.number({ error: "Enter a number" }).nonnegative("Must be zero or greater"),
+  grossSalary: z.number({ error: "Enter a number" }).nonnegative("Must be zero or greater"),
+  netSalary: z.number({ error: "Enter a number" }).nonnegative("Must be zero or greater"),
 });
 
 interface PayrollFormProps {
@@ -52,8 +54,23 @@ export function PayrollForm({ defaultValues, onCancel, onSubmit, isSubmitting }:
           error={errors.deductions?.message}
           {...register("deductions", { valueAsNumber: true })}
         />
+        <Input
+          label="Gross Salary"
+          type="number"
+          step="0.01"
+          min="0"
+          error={errors.grossSalary?.message}
+          {...register("grossSalary", { valueAsNumber: true })}
+        />
+        <Input
+          label="Net Salary"
+          type="number"
+          step="0.01"
+          min="0"
+          error={errors.netSalary?.message}
+          {...register("netSalary", { valueAsNumber: true })}
+        />
       </div>
-      <p className="text-xs text-slate-500">Gross and net salary are calculated automatically after saving.</p>
       <div className="flex gap-3">
         <Button type="submit" isLoading={isSubmitting}>
           Save changes

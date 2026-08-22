@@ -4,22 +4,29 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Eye, EyeOff } from "lucide-react";
 import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { PUBLIC_SIGNUP_ROLES } from "@/utils/constants";
-import { formatRole } from "@/utils/formatters";
 import type { SignupPayload } from "@/types/auth";
 
-const passwordRequirements = [
-  { test: (v: string) => v.length >= 8, label: "At least 8 characters" },
-  { test: (v: string) => /[A-Z]/.test(v), label: "One uppercase letter" },
-  { test: (v: string) => /[a-z]/.test(v), label: "One lowercase letter" },
-  { test: (v: string) => /[0-9]/.test(v), label: "One number" },
-];
+// Label text only — selecting "Admin / HR" still submits role=HR. Public
+// signup can never create an ADMIN account; that's enforced server-side
+// regardless of what this button is labeled.
+const roleLabels: Record<(typeof PUBLIC_SIGNUP_ROLES)[number], string> = {
+  EMPLOYEE: "Employee",
+  HR: "Admin / HR",
+};
+
+// users.employee_id is the same column for every role — only the label
+// shown to the person filling the form changes with their selected role.
+const idFieldLabels: Record<(typeof PUBLIC_SIGNUP_ROLES)[number], string> = {
+  EMPLOYEE: "Employee ID",
+  HR: "HR ID",
+};
 
 const signupSchema = z.object({
   employeeId: z.string().min(1, "Employee ID is required"),
-  email: z.string().min(1, "Email is required").email("Enter a valid email address"),
+  name: z.string().optional(),
+  email: z.string().min(1, "Work email is required").email("Enter a valid email address"),
   password: z
     .string()
     .min(8, "Password must be at least 8 characters")
@@ -41,54 +48,84 @@ export function SignupForm({ onSubmit, isSubmitting }: SignupFormProps) {
     handleSubmit,
     watch,
     formState: { errors },
-  } = useForm<SignupPayload>({ resolver: zodResolver(signupSchema) });
+  } = useForm<SignupPayload>({ resolver: zodResolver(signupSchema), defaultValues: { role: "EMPLOYEE" } });
 
-  const password = watch("password") ?? "";
+  const selectedRole = watch("role");
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-4">
-      <Input label="Employee ID" autoComplete="off" error={errors.employeeId?.message} {...register("employeeId")} />
-
-      <Input label="Email" type="email" autoComplete="email" error={errors.email?.message} {...register("email")} />
-
-      <div className="relative">
+    <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-5">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Input
-          label="Password"
-          type={showPassword ? "text" : "password"}
-          autoComplete="new-password"
-          error={errors.password?.message}
-          {...register("password")}
+          label={idFieldLabels[selectedRole ?? "EMPLOYEE"]}
+          autoComplete="off"
+          error={errors.employeeId?.message}
+          {...register("employeeId")}
         />
-        <button
-          type="button"
-          onClick={() => setShowPassword((v) => !v)}
-          aria-label={showPassword ? "Hide password" : "Show password"}
-          className="absolute right-3 top-9 text-slate-400 hover:text-slate-600"
-        >
-          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-        </button>
+        <Input label="Full name" autoComplete="name" error={errors.name?.message} {...register("name")} />
       </div>
 
-      <ul className="flex flex-col gap-1 text-xs text-slate-500">
-        {passwordRequirements.map((req) => (
-          <li key={req.label} className={req.test(password) ? "text-emerald-600" : undefined}>
-            {req.test(password) ? "✓" : "·"} {req.label}
-          </li>
-        ))}
-      </ul>
+      <Input label="Work email" type="email" autoComplete="email" error={errors.email?.message} {...register("email")} />
 
-      <Select label="Role" defaultValue="" error={errors.role?.message} {...register("role")}>
-        <option value="" disabled>
-          Select a role
-        </option>
-        {PUBLIC_SIGNUP_ROLES.map((role) => (
-          <option key={role} value={role}>
-            {formatRole(role)}
-          </option>
-        ))}
-      </Select>
+      <div>
+        <div className="relative">
+          <Input
+            label="Password"
+            type={showPassword ? "text" : "password"}
+            autoComplete="new-password"
+            error={errors.password?.message}
+            {...register("password")}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((v) => !v)}
+            aria-label={showPassword ? "Hide password" : "Show password"}
+            className="absolute right-3 top-9 text-slate-400 hover:text-slate-600"
+          >
+            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
+        </div>
+        {!errors.password && (
+          <p className="mt-1.5 text-xs text-slate-500">
+            Use 8+ characters with an uppercase letter, a lowercase letter, and a number.
+          </p>
+        )}
+      </div>
 
-      <Button type="submit" isLoading={isSubmitting} className="mt-2 w-full">
+      <div>
+        <p className="text-sm font-medium text-slate-700">Role</p>
+        <div className="mt-1.5 grid grid-cols-2 gap-3">
+          {PUBLIC_SIGNUP_ROLES.map((role) => {
+            const isSelected = selectedRole === role;
+            return (
+              <label
+                key={role}
+                className={`flex cursor-pointer items-center gap-2.5 rounded-lg border px-3.5 py-2.5 text-sm font-medium transition-colors ${
+                  isSelected
+                    ? "border-brand-500 bg-brand-50 text-brand-700"
+                    : "border-slate-300 text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                <input type="radio" value={role} className="sr-only" {...register("role")} />
+                <span
+                  className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${
+                    isSelected ? "border-brand-500" : "border-slate-300"
+                  }`}
+                >
+                  {isSelected && <span className="h-2 w-2 rounded-full bg-brand-500" />}
+                </span>
+                {roleLabels[role]}
+              </label>
+            );
+          })}
+        </div>
+        {errors.role && (
+          <p role="alert" className="mt-1.5 text-sm text-red-600">
+            {errors.role.message}
+          </p>
+        )}
+      </div>
+
+      <Button type="submit" isLoading={isSubmitting} className="mt-1 w-full">
         Create account
       </Button>
     </form>

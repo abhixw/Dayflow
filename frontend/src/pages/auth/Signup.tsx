@@ -36,7 +36,7 @@ export default function Signup() {
   return (
     <AuthLayout
       title="Create your account"
-      subtitle="Get started with Dayflow."
+      subtitle="Register with the employee ID issued by your HR officer."
       footer={
         <>
           Already have an account?{" "}

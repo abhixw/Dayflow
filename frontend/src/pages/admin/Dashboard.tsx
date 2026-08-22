@@ -1,5 +1,6 @@
 import { Users, Clock, Calendar, Wallet } from "lucide-react";
 import { QuickAccessCard } from "@/components/common/QuickAccessCard";
+import { RecentNotificationsCard } from "@/components/notifications/RecentNotificationsCard";
 import { useAuth } from "@/hooks/useAuth";
 import { ROUTES } from "@/utils/constants";
 
@@ -39,6 +40,8 @@ export default function Dashboard() {
           icon={Wallet}
         />
       </div>
+
+      <RecentNotificationsCard viewAllRoute={ROUTES.adminNotifications} />
     </div>
   );
 }

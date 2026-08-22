@@ -11,12 +11,16 @@ import EmployeeProfile from "@/pages/employee/Profile";
 import EmployeeAttendance from "@/pages/employee/Attendance";
 import EmployeeLeaves from "@/pages/employee/Leaves";
 import EmployeePayroll from "@/pages/employee/Payroll";
+import EmployeeNotifications from "@/pages/employee/Notifications";
+import EmployeeAnalytics from "@/pages/employee/Analytics";
 import AdminDashboard from "@/pages/admin/Dashboard";
 import AdminEmployees from "@/pages/admin/Employees";
 import AdminEmployeeDetails from "@/pages/admin/EmployeeDetails";
 import AdminAttendance from "@/pages/admin/Attendance";
 import AdminLeaveRequests from "@/pages/admin/LeaveRequests";
 import AdminPayroll from "@/pages/admin/Payroll";
+import AdminNotifications from "@/pages/admin/Notifications";
+import AdminAnalytics from "@/pages/admin/Analytics";
 import { useAuth } from "@/hooks/useAuth";
 import { LoadingState } from "@/components/common/LoadingState";
 import { ROUTES } from "@/utils/constants";
@@ -44,6 +48,8 @@ export default function App() {
             <Route path={ROUTES.employeeAttendance} element={<EmployeeAttendance />} />
             <Route path={ROUTES.employeeLeaves} element={<EmployeeLeaves />} />
             <Route path={ROUTES.employeePayroll} element={<EmployeePayroll />} />
+            <Route path={ROUTES.employeeNotifications} element={<EmployeeNotifications />} />
+            <Route path={ROUTES.employeeAnalytics} element={<EmployeeAnalytics />} />
           </Route>
         </Route>
 
@@ -55,6 +61,8 @@ export default function App() {
             <Route path={ROUTES.adminAttendance} element={<AdminAttendance />} />
             <Route path={ROUTES.adminLeaves} element={<AdminLeaveRequests />} />
             <Route path={ROUTES.adminPayroll} element={<AdminPayroll />} />
+            <Route path={ROUTES.adminNotifications} element={<AdminNotifications />} />
+            <Route path={ROUTES.adminAnalytics} element={<AdminAnalytics />} />
           </Route>
         </Route>
       </Route>

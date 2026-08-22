@@ -1,7 +1,5 @@
 export const API_URL = import.meta.env.VITE_API_URL as string;
 
-export const AUTH_TOKEN_STORAGE_KEY = "dayflow_token";
-
 export const PUBLIC_SIGNUP_ROLES = ["EMPLOYEE", "HR"] as const;
 
 export const ROUTES = {
@@ -14,10 +12,14 @@ export const ROUTES = {
   employeeAttendance: "/employee/attendance",
   employeeLeaves: "/employee/leaves",
   employeePayroll: "/employee/payroll",
+  employeeNotifications: "/employee/notifications",
+  employeeAnalytics: "/employee/analytics",
 
   adminDashboard: "/admin/dashboard",
   adminEmployees: "/admin/employees",
   adminAttendance: "/admin/attendance",
   adminLeaves: "/admin/leaves",
   adminPayroll: "/admin/payroll",
+  adminNotifications: "/admin/notifications",
+  adminAnalytics: "/admin/analytics",
 } as const;

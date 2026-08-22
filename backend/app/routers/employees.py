@@ -1,5 +1,3 @@
-import uuid
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -7,7 +5,7 @@ from app.core.dependencies import get_current_user, require_hr_or_admin
 from app.core.exceptions import EmployeeNotFoundError
 from app.db.database import get_db
 from app.models.user import User
-from app.schemas.employee import EmployeeAdminUpdate, EmployeeListItem, EmployeeOut, EmployeeSelfUpdate
+from app.schemas.employee import EmployeeAdminUpdate, EmployeeOut, EmployeeSelfUpdate
 from app.services import employee_service
 
 router = APIRouter(prefix="/api/employees", tags=["employees"])
@@ -36,29 +34,29 @@ async def update_my_profile(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Employee profile not found.")
 
 
-@router.get("", response_model=list[EmployeeListItem])
+@router.get("", response_model=list[EmployeeOut])
 async def list_employees(
     _: User = Depends(require_hr_or_admin),
     db: AsyncSession = Depends(get_db),
-) -> list[EmployeeListItem]:
+) -> list[EmployeeOut]:
     return await employee_service.list_employees(db)
 
 
 @router.get("/{employee_id}", response_model=EmployeeOut)
 async def get_employee(
-    employee_id: uuid.UUID,
+    employee_id: str,
     _: User = Depends(require_hr_or_admin),
     db: AsyncSession = Depends(get_db),
 ) -> EmployeeOut:
     try:
-        return await employee_service.get_profile_by_employee_id(db, employee_id)
+        return await employee_service.get_profile_by_employee_code(db, employee_id)
     except EmployeeNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Employee not found.")
 
 
 @router.patch("/{employee_id}", response_model=EmployeeOut)
 async def update_employee(
-    employee_id: uuid.UUID,
+    employee_id: str,
     payload: EmployeeAdminUpdate,
     _: User = Depends(require_hr_or_admin),
     db: AsyncSession = Depends(get_db),

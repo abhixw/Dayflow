@@ -7,9 +7,12 @@ export interface Payroll {
   netSalary: number;
 }
 
-// Gross/net salary are excluded: the backend computes them, the frontend never derives payroll values itself.
+// No automatic calculation: the backend stores exactly what HR enters here,
+// gross/net included (the MVP spec explicitly excludes automated payroll math).
 export interface PayrollUpdatePayload {
   basicSalary: number;
   allowances: number;
   deductions: number;
+  grossSalary: number;
+  netSalary: number;
 }

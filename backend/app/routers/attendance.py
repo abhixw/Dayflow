@@ -1,4 +1,3 @@
-import uuid
 from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -62,7 +61,7 @@ async def get_my_attendance(
 
 @router.get("", response_model=list[AttendanceOut])
 async def list_attendance(
-    employee_id: uuid.UUID | None = Query(default=None),
+    employee_id: str | None = Query(default=None),
     start_date: date | None = Query(default=None),
     end_date: date | None = Query(default=None),
     _: User = Depends(require_hr_or_admin),
@@ -73,7 +72,7 @@ async def list_attendance(
 
 @router.get("/{employee_id}", response_model=list[AttendanceOut])
 async def get_employee_attendance(
-    employee_id: uuid.UUID,
+    employee_id: str,
     start_date: date | None = Query(default=None),
     end_date: date | None = Query(default=None),
     _: User = Depends(require_hr_or_admin),

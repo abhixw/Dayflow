@@ -1,4 +1,4 @@
-import { API_URL, AUTH_TOKEN_STORAGE_KEY } from "@/utils/constants";
+import { API_URL } from "@/utils/constants";
 import type { ApiError } from "@/types/auth";
 
 type RequestOptions = Omit<RequestInit, "body"> & {
@@ -9,21 +9,19 @@ function isFormData(value: unknown): value is FormData {
   return value instanceof FormData;
 }
 
-function getToken(): string | null {
-  return localStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
-}
+// Cookie auth: the JWT lives in an HttpOnly cookie the browser attaches
+// automatically (credentials: "include"), so the frontend never reads or
+// stores it. When any request comes back 401, the session has expired
+// server-side; AuthContext registers a handler here to clear local auth
+// state and let the existing route guards redirect to /login.
+let onUnauthorized: (() => void) | null = null;
 
-export function setToken(token: string | null): void {
-  if (token) {
-    localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, token);
-  } else {
-    localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
-  }
+export function setUnauthorizedHandler(handler: (() => void) | null): void {
+  onUnauthorized = handler;
 }
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { body, headers, ...rest } = options;
-  const token = getToken();
 
   let response: Response;
   try {
@@ -33,7 +31,6 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
       credentials: "include",
       headers: {
         ...(body !== undefined && !formData ? { "Content-Type": "application/json" } : {}),
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...headers,
       },
       body: body === undefined ? undefined : formData ? body : JSON.stringify(body),
@@ -51,6 +48,9 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   const payload = isJson ? await response.json().catch(() => null) : null;
 
   if (!response.ok) {
+    if (response.status === 401) {
+      onUnauthorized?.();
+    }
     const error: ApiError = {
       status: response.status,
       message: payload?.message ?? payload?.detail ?? defaultMessageFor(response.status),

@@ -1,3 +1,5 @@
+import contextlib
+
 import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
@@ -43,3 +45,20 @@ async def client():
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
+
+
+@pytest.fixture
+async def client_factory():
+    """Cookie auth means one client can only hold one identity's cookie at a
+    time (each login overwrites the last). Tests that need two authenticated
+    identities concurrently (e.g. HR acting on an employee's data) must use
+    separate clients, each with its own cookie jar."""
+    async with contextlib.AsyncExitStack() as stack:
+
+        async def _make() -> AsyncClient:
+            transport = ASGITransport(app=app)
+            ac = AsyncClient(transport=transport, base_url="http://test")
+            await stack.enter_async_context(ac)
+            return ac
+
+        yield _make

@@ -3,8 +3,6 @@ EMPLOYEE_PAYLOAD = {
     "email": "attendance.employee@example.com",
     "password": "supersecret123",
     "role": "EMPLOYEE",
-    "first_name": "John",
-    "last_name": "Doe",
 }
 
 EMPLOYEE2_PAYLOAD = {
@@ -12,8 +10,6 @@ EMPLOYEE2_PAYLOAD = {
     "email": "attendance.employee2@example.com",
     "password": "supersecret123",
     "role": "EMPLOYEE",
-    "first_name": "Jane",
-    "last_name": "Smith",
 }
 
 HR_PAYLOAD = {
@@ -21,12 +17,11 @@ HR_PAYLOAD = {
     "email": "attendance.hr@example.com",
     "password": "supersecret123",
     "role": "HR",
-    "first_name": "Hana",
-    "last_name": "Reyes",
 }
 
 
-async def _signup_and_login(client, payload):
+async def _signup_and_login(client_factory, payload):
+    client = await client_factory()
     signup_response = await client.post("/api/auth/signup", json=payload)
     assert signup_response.status_code == 201
 
@@ -34,88 +29,87 @@ async def _signup_and_login(client, payload):
         "/api/auth/login", json={"email": payload["email"], "password": payload["password"]}
     )
     assert login_response.status_code == 200
-    token = login_response.json()["access_token"]
-    headers = {"Authorization": f"Bearer {token}"}
 
-    me_response = await client.get("/api/employees/me", headers=headers)
+    me_response = await client.get("/api/employees/me")
     assert me_response.status_code == 200
-    employee_pk = me_response.json()["id"]
+    employee_code = me_response.json()["employeeId"]
 
-    return employee_pk, headers
+    return employee_code, client
 
 
-async def test_check_in_success(client):
-    _, headers = await _signup_and_login(client, EMPLOYEE_PAYLOAD)
-    response = await client.post("/api/attendance/check-in", headers=headers)
+async def test_check_in_success(client_factory):
+    _, client = await _signup_and_login(client_factory, EMPLOYEE_PAYLOAD)
+    response = await client.post("/api/attendance/check-in")
     assert response.status_code == 201
     body = response.json()
-    assert body["check_in"] is not None
-    assert body["check_out"] is None
+    assert body["checkIn"] is not None
+    assert body["checkOut"] is None
     assert body["status"] == "PRESENT"
 
 
-async def test_duplicate_check_in_rejected(client):
-    _, headers = await _signup_and_login(client, EMPLOYEE_PAYLOAD)
-    first = await client.post("/api/attendance/check-in", headers=headers)
+async def test_duplicate_check_in_rejected(client_factory):
+    _, client = await _signup_and_login(client_factory, EMPLOYEE_PAYLOAD)
+    first = await client.post("/api/attendance/check-in")
     assert first.status_code == 201
-    second = await client.post("/api/attendance/check-in", headers=headers)
+    second = await client.post("/api/attendance/check-in")
     assert second.status_code == 409
 
 
-async def test_check_out_success(client):
-    _, headers = await _signup_and_login(client, EMPLOYEE_PAYLOAD)
-    await client.post("/api/attendance/check-in", headers=headers)
-    response = await client.post("/api/attendance/check-out", headers=headers)
+async def test_check_out_success(client_factory):
+    _, client = await _signup_and_login(client_factory, EMPLOYEE_PAYLOAD)
+    await client.post("/api/attendance/check-in")
+    response = await client.post("/api/attendance/check-out")
     assert response.status_code == 200
-    assert response.json()["check_out"] is not None
+    assert response.json()["checkOut"] is not None
 
 
-async def test_check_out_before_check_in_rejected(client):
-    _, headers = await _signup_and_login(client, EMPLOYEE_PAYLOAD)
-    response = await client.post("/api/attendance/check-out", headers=headers)
+async def test_check_out_before_check_in_rejected(client_factory):
+    _, client = await _signup_and_login(client_factory, EMPLOYEE_PAYLOAD)
+    response = await client.post("/api/attendance/check-out")
     assert response.status_code == 400
 
 
-async def test_duplicate_check_out_rejected(client):
-    _, headers = await _signup_and_login(client, EMPLOYEE_PAYLOAD)
-    await client.post("/api/attendance/check-in", headers=headers)
-    first = await client.post("/api/attendance/check-out", headers=headers)
+async def test_duplicate_check_out_rejected(client_factory):
+    _, client = await _signup_and_login(client_factory, EMPLOYEE_PAYLOAD)
+    await client.post("/api/attendance/check-in")
+    first = await client.post("/api/attendance/check-out")
     assert first.status_code == 200
-    second = await client.post("/api/attendance/check-out", headers=headers)
+    second = await client.post("/api/attendance/check-out")
     assert second.status_code == 409
 
 
-async def test_employee_sees_only_own_attendance(client):
-    _, headers1 = await _signup_and_login(client, EMPLOYEE_PAYLOAD)
-    _, headers2 = await _signup_and_login(client, EMPLOYEE2_PAYLOAD)
+async def test_employee_sees_only_own_attendance(client_factory):
+    _, client1 = await _signup_and_login(client_factory, EMPLOYEE_PAYLOAD)
+    _, client2 = await _signup_and_login(client_factory, EMPLOYEE2_PAYLOAD)
 
-    await client.post("/api/attendance/check-in", headers=headers1)
-    await client.post("/api/attendance/check-in", headers=headers2)
+    await client1.post("/api/attendance/check-in")
+    await client2.post("/api/attendance/check-in")
 
-    response = await client.get("/api/attendance/me", headers=headers1)
+    response = await client1.get("/api/attendance/me")
     assert response.status_code == 200
     records = response.json()
     assert len(records) == 1
 
 
-async def test_employee_cannot_access_admin_attendance_endpoints(client):
-    employee_id, headers = await _signup_and_login(client, EMPLOYEE_PAYLOAD)
-    list_response = await client.get("/api/attendance", headers=headers)
+async def test_employee_cannot_access_admin_attendance_endpoints(client_factory):
+    employee_code, client = await _signup_and_login(client_factory, EMPLOYEE_PAYLOAD)
+    list_response = await client.get("/api/attendance")
     assert list_response.status_code == 403
-    detail_response = await client.get(f"/api/attendance/{employee_id}", headers=headers)
+    detail_response = await client.get(f"/api/attendance/{employee_code}")
     assert detail_response.status_code == 403
 
 
-async def test_hr_sees_all_attendance(client):
-    employee_id, employee_headers = await _signup_and_login(client, EMPLOYEE_PAYLOAD)
-    _, hr_headers = await _signup_and_login(client, HR_PAYLOAD)
+async def test_hr_sees_all_attendance(client_factory):
+    employee_code, employee_client = await _signup_and_login(client_factory, EMPLOYEE_PAYLOAD)
+    _, hr_client = await _signup_and_login(client_factory, HR_PAYLOAD)
 
-    await client.post("/api/attendance/check-in", headers=employee_headers)
+    await employee_client.post("/api/attendance/check-in")
 
-    list_response = await client.get("/api/attendance", headers=hr_headers)
+    list_response = await hr_client.get("/api/attendance")
     assert list_response.status_code == 200
     assert len(list_response.json()) >= 1
 
-    detail_response = await client.get(f"/api/attendance/{employee_id}", headers=hr_headers)
+    detail_response = await hr_client.get(f"/api/attendance/{employee_code}")
     assert detail_response.status_code == 200
     assert len(detail_response.json()) == 1
+    assert detail_response.json()[0]["employeeId"] == employee_code

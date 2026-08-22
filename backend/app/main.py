@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.routers import attendance, auth, employees, leaves, payroll
+from app.routers import analytics, attendance, auth, employees, leaves, notifications, payroll
 
 app = FastAPI(title="Dayflow HRMS API")
 
@@ -19,6 +19,8 @@ app.include_router(employees.router)
 app.include_router(attendance.router)
 app.include_router(leaves.router)
 app.include_router(payroll.router)
+app.include_router(notifications.router)
+app.include_router(analytics.router)
 
 
 @app.get("/health")

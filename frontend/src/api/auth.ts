@@ -1,16 +1,11 @@
 import { apiClient } from "@/api/client";
-import type {
-  LoginPayload,
-  LoginResponse,
-  SignupPayload,
-  SignupResponse,
-  User,
-  VerifyEmailPayload,
-} from "@/types/auth";
+import type { LoginPayload, SignupPayload, User, VerifyEmailPayload } from "@/types/auth";
 
 export const authApi = {
-  login: (payload: LoginPayload) => apiClient.post<LoginResponse>("/api/auth/login", payload),
-  signup: (payload: SignupPayload) => apiClient.post<SignupResponse>("/api/auth/signup", payload),
+  // Cookie auth: the backend sets an HttpOnly access_token cookie and
+  // returns the user directly — no token in the response body.
+  login: (payload: LoginPayload) => apiClient.post<User>("/api/auth/login", payload),
+  signup: (payload: SignupPayload) => apiClient.post<User>("/api/auth/signup", payload),
   me: () => apiClient.get<User>("/api/auth/me"),
   logout: () => apiClient.post<void>("/api/auth/logout"),
   // Path not in the given contract; update once the real backend route is known.

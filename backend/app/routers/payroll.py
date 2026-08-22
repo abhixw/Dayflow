@@ -1,5 +1,3 @@
-import uuid
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -28,12 +26,12 @@ async def get_my_payroll(
 
 @router.get("/{employee_id}", response_model=PayrollOut)
 async def get_employee_payroll(
-    employee_id: uuid.UUID,
+    employee_id: str,
     _: User = Depends(require_hr_or_admin),
     db: AsyncSession = Depends(get_db),
 ) -> PayrollOut:
     try:
-        return await payroll_service.get_payroll_by_employee_id(db, employee_id)
+        return await payroll_service.get_payroll_by_employee_code(db, employee_id)
     except EmployeeNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Employee not found.")
     except PayrollNotFoundError:
@@ -42,7 +40,7 @@ async def get_employee_payroll(
 
 @router.patch("/{employee_id}", response_model=PayrollOut)
 async def update_employee_payroll(
-    employee_id: uuid.UUID,
+    employee_id: str,
     payload: PayrollUpdate,
     current_user: User = Depends(require_hr_or_admin),
     db: AsyncSession = Depends(get_db),

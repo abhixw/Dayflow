@@ -1,19 +1,22 @@
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
+from pydantic import EmailStr, field_validator
 
 from app.models.enums import Role
+from app.schemas.base import CamelModel
 
 PUBLIC_ROLES = {Role.EMPLOYEE, Role.HR}
 
 
-class SignupRequest(BaseModel):
+class SignupRequest(CamelModel):
     employee_id: str
     email: EmailStr
     password: str
     role: Role
-    first_name: str
-    last_name: str
+    # Optional: not part of the MVP's core 4-field signup contract, but if the
+    # frontend collects it, store it immediately instead of discarding it —
+    # otherwise HR has to fill it in later via the employee-management PATCH.
+    name: str | None = None
 
     @field_validator("role")
     @classmethod
@@ -37,22 +40,14 @@ class SignupRequest(BaseModel):
         return value.strip()
 
 
-class LoginRequest(BaseModel):
+class LoginRequest(CamelModel):
     email: EmailStr
     password: str
 
 
-class TokenResponse(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
-
-
-class UserOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
+class UserOut(CamelModel):
     id: UUID
     employee_id: str
     email: EmailStr
     role: Role
-    is_verified: bool
-    is_active: bool
+    email_verified: bool

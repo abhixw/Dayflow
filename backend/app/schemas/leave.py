@@ -1,12 +1,13 @@
 import uuid
 from datetime import date, datetime
 
-from pydantic import BaseModel, ConfigDict, model_validator
+from pydantic import model_validator
 
 from app.models.enums import LeaveStatus, LeaveType
+from app.schemas.base import CamelModel
 
 
-class LeaveCreate(BaseModel):
+class LeaveCreate(CamelModel):
     leave_type: LeaveType
     start_date: date
     end_date: date
@@ -19,15 +20,13 @@ class LeaveCreate(BaseModel):
         return self
 
 
-class LeaveReviewRequest(BaseModel):
+class LeaveReviewRequest(CamelModel):
     comment: str | None = None
 
 
-class LeaveOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
+class LeaveOut(CamelModel):
     id: uuid.UUID
-    employee_id: uuid.UUID
+    employee_id: str
     leave_type: LeaveType
     start_date: date
     end_date: date

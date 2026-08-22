@@ -98,6 +98,8 @@ export default function Payroll() {
                     basicSalary: payroll.basicSalary,
                     allowances: payroll.allowances,
                     deductions: payroll.deductions,
+                    grossSalary: payroll.grossSalary,
+                    netSalary: payroll.netSalary,
                   }}
                   onCancel={() => {
                     setIsEditing(false);

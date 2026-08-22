@@ -1,6 +1,6 @@
 import { createContext, useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { authApi } from "@/api/auth";
-import { setToken } from "@/api/client";
+import { setUnauthorizedHandler } from "@/api/client";
 import type { LoginPayload, SignupPayload, User } from "@/types/auth";
 
 interface AuthContextValue {
@@ -26,11 +26,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .finally(() => setIsLoading(false));
   }, []);
 
+  // Cookie auth: any 401 from the API (session expired, cookie missing/
+  // invalid) should clear auth state everywhere, not just on the initial
+  // /me check, so ProtectedRoute redirects to /login on the next render.
+  useEffect(() => {
+    setUnauthorizedHandler(() => setUser(null));
+    return () => setUnauthorizedHandler(null);
+  }, []);
+
   const login = useCallback(async (payload: LoginPayload) => {
-    const response = await authApi.login(payload);
-    setToken(response.token);
-    setUser(response.user);
-    return response.user;
+    const loggedInUser = await authApi.login(payload);
+    setUser(loggedInUser);
+    return loggedInUser;
   }, []);
 
   const signup = useCallback(async (payload: SignupPayload) => {
@@ -43,7 +50,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       // Logout should clear local state even if the API call fails.
     } finally {
-      setToken(null);
       setUser(null);
     }
   }, []);

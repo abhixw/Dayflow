@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
-import { LayoutDashboard, Users, Clock, Calendar, Wallet } from "lucide-react";
+import { LayoutDashboard, Users, Clock, Calendar, Wallet, Bell, BarChart3 } from "lucide-react";
 import { Sidebar, type SidebarNavItem } from "@/components/layout/Sidebar";
 import { Topbar } from "@/components/layout/Topbar";
 import { ROUTES } from "@/utils/constants";
@@ -11,6 +11,8 @@ const navItems: SidebarNavItem[] = [
   { label: "Attendance", to: ROUTES.adminAttendance, icon: Clock },
   { label: "Leave Requests", to: ROUTES.adminLeaves, icon: Calendar },
   { label: "Payroll", to: ROUTES.adminPayroll, icon: Wallet },
+  { label: "Analytics", to: ROUTES.adminAnalytics, icon: BarChart3 },
+  { label: "Notifications", to: ROUTES.adminNotifications, icon: Bell },
 ];
 
 export default function AdminLayout() {

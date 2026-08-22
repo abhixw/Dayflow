@@ -49,7 +49,7 @@ async def get_my_leaves(
 
 @router.get("", response_model=list[LeaveOut])
 async def list_leaves(
-    employee_id: uuid.UUID | None = Query(default=None),
+    employee_id: str | None = Query(default=None),
     status_filter: LeaveStatus | None = Query(default=None, alias="status"),
     _: User = Depends(require_hr_or_admin),
     db: AsyncSession = Depends(get_db),

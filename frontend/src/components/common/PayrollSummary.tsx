@@ -2,6 +2,8 @@ import { Card } from "@/components/ui/Card";
 import { formatCurrency } from "@/utils/formatters";
 import type { Payroll } from "@/types/payroll";
 
+type PayrollSummaryFields = Pick<Payroll, "basicSalary" | "allowances" | "deductions" | "grossSalary" | "netSalary">;
+
 function PayrollField({ label, value, emphasize = false }: { label: string; value: number; emphasize?: boolean }) {
   return (
     <div>
@@ -13,7 +15,7 @@ function PayrollField({ label, value, emphasize = false }: { label: string; valu
   );
 }
 
-export function PayrollSummary({ payroll }: { payroll: Payroll }) {
+export function PayrollSummary({ payroll }: { payroll: PayrollSummaryFields }) {
   return (
     <Card className="p-6">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

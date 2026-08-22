@@ -11,9 +11,28 @@ from app.core.exceptions import (
     OverlappingLeaveError,
 )
 from app.models.employee import Employee
-from app.models.enums import LeaveStatus, Role
+from app.models.enums import LeaveStatus, NotificationType, Role
 from app.models.leave import Leave
+from app.models.user import User
 from app.schemas.leave import LeaveCreate, LeaveOut
+from app.services import email_service, notification_service
+
+
+def _to_out(leave: Leave, employee_code: str) -> LeaveOut:
+    return LeaveOut(
+        id=leave.id,
+        employee_id=employee_code,
+        leave_type=leave.leave_type,
+        start_date=leave.start_date,
+        end_date=leave.end_date,
+        remarks=leave.remarks,
+        status=leave.status,
+        reviewer_id=leave.reviewer_id,
+        review_comment=leave.review_comment,
+        reviewed_at=leave.reviewed_at,
+        created_at=leave.created_at,
+        updated_at=leave.updated_at,
+    )
 
 
 async def _get_employee_for_user(db: AsyncSession, user_id: uuid.UUID) -> Employee:
@@ -21,6 +40,16 @@ async def _get_employee_for_user(db: AsyncSession, user_id: uuid.UUID) -> Employ
     if employee is None:
         raise EmployeeNotFoundError
     return employee
+
+
+async def _notify_hr_and_admins_of_new_leave(db: AsyncSession, applicant: Employee, leave: Leave) -> None:
+    reviewers = await db.scalars(select(User).where(User.role.in_([Role.HR, Role.ADMIN])))
+    name = f"{applicant.first_name or ''} {applicant.last_name or ''}".strip() or applicant.employee_id
+    title = "New Leave Request"
+    message = f"{name} submitted a {leave.leave_type.value.lower()} leave request ({leave.start_date} to {leave.end_date})."
+    for reviewer in reviewers:
+        await notification_service.create_notification(db, reviewer.id, NotificationType.LEAVE_SUBMITTED, title, message)
+        await email_service.send_email(reviewer.email, title, message)
 
 
 async def create_leave(db: AsyncSession, user_id: uuid.UUID, payload: LeaveCreate) -> LeaveOut:
@@ -49,7 +78,10 @@ async def create_leave(db: AsyncSession, user_id: uuid.UUID, payload: LeaveCreat
     db.add(leave)
     await db.commit()
     await db.refresh(leave)
-    return LeaveOut.model_validate(leave)
+
+    await _notify_hr_and_admins_of_new_leave(db, employee, leave)
+
+    return _to_out(leave, employee.employee_id)
 
 
 async def get_own_leaves(db: AsyncSession, user_id: uuid.UUID) -> list[LeaveOut]:
@@ -57,7 +89,7 @@ async def get_own_leaves(db: AsyncSession, user_id: uuid.UUID) -> list[LeaveOut]
     result = await db.scalars(
         select(Leave).where(Leave.employee_id == employee.id).order_by(Leave.created_at.desc())
     )
-    return [LeaveOut.model_validate(leave) for leave in result]
+    return [_to_out(leave, employee.employee_id) for leave in result]
 
 
 async def get_leave_by_id(
@@ -67,27 +99,29 @@ async def get_leave_by_id(
     if leave is None:
         raise LeaveNotFoundError
 
+    leave_employee = await db.get(Employee, leave.employee_id)
+
     if role in (Role.HR, Role.ADMIN):
-        return LeaveOut.model_validate(leave)
+        return _to_out(leave, leave_employee.employee_id)
 
     employee = await _get_employee_for_user(db, user_id)
     if leave.employee_id != employee.id:
         raise LeaveNotFoundError
-    return LeaveOut.model_validate(leave)
+    return _to_out(leave, employee.employee_id)
 
 
 async def list_all_leaves(
-    db: AsyncSession, employee_id: uuid.UUID | None, status: LeaveStatus | None
+    db: AsyncSession, employee_code: str | None, status: LeaveStatus | None
 ) -> list[LeaveOut]:
-    query = select(Leave)
-    if employee_id is not None:
-        query = query.where(Leave.employee_id == employee_id)
+    query = select(Leave, Employee).join(Employee, Leave.employee_id == Employee.id)
+    if employee_code is not None:
+        query = query.where(Employee.employee_id == employee_code)
     if status is not None:
         query = query.where(Leave.status == status)
     query = query.order_by(Leave.created_at.desc())
 
-    result = await db.scalars(query)
-    return [LeaveOut.model_validate(leave) for leave in result]
+    result = await db.execute(query)
+    return [_to_out(leave, employee.employee_id) for leave, employee in result.all()]
 
 
 async def _review_leave(
@@ -109,7 +143,21 @@ async def _review_leave(
     leave.reviewed_at = datetime.now(timezone.utc)
     await db.commit()
     await db.refresh(leave)
-    return LeaveOut.model_validate(leave)
+
+    employee = await db.get(Employee, leave.employee_id)
+    applicant_user = await db.get(User, employee.user_id)
+
+    notif_type = NotificationType.LEAVE_APPROVED if new_status == LeaveStatus.APPROVED else NotificationType.LEAVE_REJECTED
+    title = "Leave Approved" if new_status == LeaveStatus.APPROVED else "Leave Rejected"
+    verb = "approved" if new_status == LeaveStatus.APPROVED else "rejected"
+    message = f"Your {leave.leave_type.value.lower()} leave request ({leave.start_date} to {leave.end_date}) has been {verb}."
+    if comment:
+        message += f" Comment: {comment}"
+
+    await notification_service.create_notification(db, applicant_user.id, notif_type, title, message)
+    await email_service.send_email(applicant_user.email, title, message)
+
+    return _to_out(leave, employee.employee_id)
 
 
 async def approve_leave(

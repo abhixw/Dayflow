@@ -1,4 +1,3 @@
-import secrets
 import uuid
 
 from sqlalchemy import select
@@ -8,10 +7,20 @@ from app.core.exceptions import DuplicateEmailError, DuplicateEmployeeIdError, I
 from app.core.security import create_access_token, hash_password, verify_password
 from app.models.employee import Employee
 from app.models.user import User
-from app.schemas.auth import LoginRequest, SignupRequest
+from app.schemas.auth import LoginRequest, SignupRequest, UserOut
 
 
-async def create_user(db: AsyncSession, payload: SignupRequest) -> User:
+def _to_user_out(user: User) -> UserOut:
+    return UserOut(
+        id=user.id,
+        employee_id=user.employee_id,
+        email=user.email,
+        role=user.role,
+        email_verified=user.is_verified,
+    )
+
+
+async def create_user(db: AsyncSession, payload: SignupRequest) -> UserOut:
     existing_email = await db.scalar(select(User).where(User.email == payload.email))
     if existing_email:
         raise DuplicateEmailError
@@ -28,26 +37,31 @@ async def create_user(db: AsyncSession, payload: SignupRequest) -> User:
         role=payload.role,
         is_verified=False,
         is_active=True,
-        verification_token=secrets.token_urlsafe(32),
     )
     db.add(user)
     await db.flush()
+
+    first_name, last_name = None, None
+    if payload.name:
+        parts = payload.name.split(maxsplit=1)
+        first_name = parts[0]
+        last_name = parts[1] if len(parts) > 1 else ""
 
     employee = Employee(
         id=uuid.uuid4(),
         user_id=user.id,
         employee_id=user.employee_id,
-        first_name=payload.first_name,
-        last_name=payload.last_name,
+        first_name=first_name,
+        last_name=last_name,
     )
     db.add(employee)
 
     await db.commit()
     await db.refresh(user)
-    return user
+    return _to_user_out(user)
 
 
-async def authenticate_user(db: AsyncSession, payload: LoginRequest) -> str:
+async def authenticate_user(db: AsyncSession, payload: LoginRequest) -> tuple[str, UserOut]:
     user = await db.scalar(select(User).where(User.email == payload.email))
     if not user or not verify_password(payload.password, user.password_hash):
         raise InvalidCredentialsError
@@ -55,4 +69,5 @@ async def authenticate_user(db: AsyncSession, payload: LoginRequest) -> str:
     if not user.is_active:
         raise InactiveUserError
 
-    return create_access_token(user_id=user.id, role=user.role.value)
+    token = create_access_token(user_id=user.id, role=user.role.value)
+    return token, _to_user_out(user)

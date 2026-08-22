@@ -244,12 +244,14 @@ docker compose up --build
 
 - Backend: http://localhost:8000 (runs `alembic upgrade head` on every start,
   then `uvicorn --reload`; source is bind-mounted so edits reload live)
-- Frontend: http://localhost:5173 (Vite dev server, also bind-mounted with
-  live reload)
+- Frontend: http://localhost:5175 (Vite dev server, also bind-mounted with
+  live reload; the container's internal Vite port stays `5173` — only the
+  host-side mapping was moved, to `5175:5173` in `docker-compose.yml`, to
+  avoid clashing with another project already using `5173` locally)
 
-`CORS_ORIGINS=http://localhost:5173` in `backend/.env` already matches the
-frontend's published port, so no CORS changes are needed. `docker compose
-down` stops both containers.
+`CORS_ORIGINS=http://localhost:5175` in `backend/.env` must match whatever
+host port the frontend is published on — update both together if you change
+it again. `docker compose down` stops both containers.
 
 ### Seed data
 
