@@ -5,6 +5,10 @@ type RequestOptions = Omit<RequestInit, "body"> & {
   body?: unknown;
 };
 
+function isFormData(value: unknown): value is FormData {
+  return value instanceof FormData;
+}
+
 function getToken(): string | null {
   return localStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
 }
@@ -23,15 +27,16 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 
   let response: Response;
   try {
+    const formData = isFormData(body);
     response = await fetch(`${API_URL}${path}`, {
       ...rest,
       credentials: "include",
       headers: {
-        ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
+        ...(body !== undefined && !formData ? { "Content-Type": "application/json" } : {}),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...headers,
       },
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: body === undefined ? undefined : formData ? body : JSON.stringify(body),
     });
   } catch {
     const error: ApiError = { status: 0, message: "Unable to reach the server. Check your connection and try again." };
