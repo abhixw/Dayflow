@@ -26,7 +26,7 @@ export function Sidebar({ items, isOpen, onClose }: SidebarProps) {
         .join("")
         .slice(0, 2)
         .toUpperCase()
-    : "AM";
+    : "?";
 
   return (
     <>
@@ -87,10 +87,14 @@ export function Sidebar({ items, isOpen, onClose }: SidebarProps) {
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-white leading-snug">
-                {employee?.name || "Aarav Mehta"}
+                {employee?.name ?? (
+                  <span className="inline-block h-3.5 w-24 animate-pulse rounded bg-white/10" />
+                )}
               </p>
               <p className="truncate text-xs text-slate-400">
-                {employee?.jobTitle || "Employee"}
+                {employee?.jobTitle ?? (
+                  <span className="inline-block h-2.5 w-16 animate-pulse rounded bg-white/10" />
+                )}
               </p>
             </div>
           </div>

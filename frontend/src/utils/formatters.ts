@@ -45,10 +45,10 @@ export function formatTime(value: string | undefined | null): string {
 
 export function formatCurrency(value: number | undefined | null): string {
   if (value === undefined || value === null) return "—";
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat("en-IN", {
     style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 2,
+    currency: "INR",
+    maximumFractionDigits: 0,
   }).format(value);
 }
 

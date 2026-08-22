@@ -80,14 +80,16 @@ export default function Dashboard() {
     return isNaN(diff) ? 0 : diff;
   };
 
+  // Real counts only — the backend has no leave-allowance/balance concept
+  // (the MVP spec explicitly excludes it), so these are actual approved days
+  // taken, not a fabricated "remaining out of N" quota.
   const approvedLeaves = leaves?.filter((l) => l.status === "APPROVED") || [];
-  const paidUsed = approvedLeaves.filter((l) => l.leaveType === "PAID").reduce((sum, l) => sum + calculateDays(l.startDate, l.endDate), 0);
-  const sickUsed = approvedLeaves.filter((l) => l.leaveType === "SICK").reduce((sum, l) => sum + calculateDays(l.startDate, l.endDate), 0);
-  const unpaidUsed = approvedLeaves.filter((l) => l.leaveType === "UNPAID").reduce((sum, l) => sum + calculateDays(l.startDate, l.endDate), 0);
-
-  const remainingPaid = Math.max(0, 18 - paidUsed);
-  const remainingSick = Math.max(0, 10 - sickUsed);
-  const remainingUnpaid = Math.max(0, 5 - unpaidUsed);
+  const paidTaken = approvedLeaves.filter((l) => l.leaveType === "PAID").reduce((sum, l) => sum + calculateDays(l.startDate, l.endDate), 0);
+  const sickTaken = approvedLeaves.filter((l) => l.leaveType === "SICK").reduce((sum, l) => sum + calculateDays(l.startDate, l.endDate), 0);
+  const unpaidTaken = approvedLeaves.filter((l) => l.leaveType === "UNPAID").reduce((sum, l) => sum + calculateDays(l.startDate, l.endDate), 0);
+  const totalTaken = paidTaken + sickTaken + unpaidTaken;
+  const maxTaken = Math.max(paidTaken, sickTaken, unpaidTaken, 1);
+  const pendingLeaveCount = leaves?.filter((l) => l.status === "PENDING").length ?? 0;
 
   // Formatting helpers
   const formatHeaderDate = () => {
@@ -100,7 +102,7 @@ export default function Dashboard() {
   };
 
   const formatSalary = (salary: number | undefined | null) => {
-    if (salary === undefined || salary === null) return "₹1,22,200";
+    if (salary === undefined || salary === null) return "—";
     return new Intl.NumberFormat("en-IN", {
       style: "currency",
       currency: "INR",
@@ -155,7 +157,7 @@ export default function Dashboard() {
             {isEmployeeLoading ? (
               <span className="inline-block h-9 w-48 animate-pulse rounded bg-slate-200" />
             ) : (
-              `Hello, ${employee?.name?.split(" ")[0] || "Aarav"}`
+              `Hello, ${employee?.name?.split(" ")[0] ?? "there"}`
             )}
           </h1>
           <p className="mt-1.5 text-sm font-medium text-slate-500">
@@ -212,10 +214,10 @@ export default function Dashboard() {
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">This week</p>
             <p className="mt-1 text-3xl font-bold tracking-tight text-slate-900">
-              {totalHours > 0 ? `${totalHours.toFixed(1)} h` : "31.8 h"}
+              {totalHours > 0 ? `${totalHours.toFixed(1)} h` : "—"}
             </p>
             <p className="mt-1 text-xs text-slate-400">
-              Across {loggedDaysCount > 0 ? loggedDaysCount : 5} working days
+              Across {loggedDaysCount > 0 ? loggedDaysCount : "—"} working days
             </p>
           </div>
         </div>
@@ -228,23 +230,29 @@ export default function Dashboard() {
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Attendance rate</p>
             <p className="mt-1 text-3xl font-bold tracking-tight text-slate-900">
-              {analytics?.attendance?.percentage ? `${Math.round(analytics.attendance.percentage)}%` : "92%"}
+              {analytics?.attendance?.percentage != null
+                ? `${Math.round(analytics.attendance.percentage)}%`
+                : "—"}
             </p>
             <p className="mt-1 text-xs text-slate-400">Rolling 30 days</p>
           </div>
         </div>
 
-        {/* Card 3: Leave balance */}
+        {/* Card 3: Leave taken (real data — no fabricated "remaining" balance) */}
         <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm flex flex-col justify-between h-40">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
             <FileText className="h-4.5 w-4.5" />
           </div>
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Leave balance</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Leave taken</p>
             <p className="mt-1 text-3xl font-bold tracking-tight text-slate-900">
-              {remainingPaid} days
+              {totalTaken} {totalTaken === 1 ? "day" : "days"}
             </p>
-            <p className="mt-1 text-xs text-slate-400">Paid leave remaining</p>
+            <p className="mt-1 text-xs text-slate-400">
+              {pendingLeaveCount > 0
+                ? `${pendingLeaveCount} request${pendingLeaveCount === 1 ? "" : "s"} pending`
+                : "Approved, all time"}
+            </p>
           </div>
         </div>
 
@@ -314,48 +322,47 @@ export default function Dashboard() {
 
         {/* Right Column: Leave Balance & Alerts */}
         <div className="flex flex-col gap-6">
-          {/* Leave balance progress bars */}
+          {/* Leave taken by type — bars are relative to each other (whichever
+              type has the most approved days), not against any allowance,
+              since the backend has no leave-balance concept. */}
           <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-bold text-slate-900 border-b border-slate-100 pb-3">Leave balance</h2>
+            <h2 className="text-lg font-bold text-slate-900 border-b border-slate-100 pb-3">Leave taken</h2>
             <div className="mt-4 flex flex-col gap-4">
-              {/* Paid leave */}
               <div>
                 <div className="flex justify-between text-xs font-semibold text-slate-700">
                   <span>Paid leave</span>
-                  <span className="text-slate-400">{remainingPaid} / 18 left</span>
+                  <span className="text-slate-400">{paidTaken} {paidTaken === 1 ? "day" : "days"}</span>
                 </div>
                 <div className="mt-1.5 h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
                   <div
                     className="h-full rounded-full bg-indigo-600 transition-all duration-300"
-                    style={{ width: `${(remainingPaid / 18) * 100}%` }}
+                    style={{ width: `${(paidTaken / maxTaken) * 100}%` }}
                   />
                 </div>
               </div>
 
-              {/* Sick leave */}
               <div>
                 <div className="flex justify-between text-xs font-semibold text-slate-700">
                   <span>Sick leave</span>
-                  <span className="text-slate-400">{remainingSick} / 10 left</span>
+                  <span className="text-slate-400">{sickTaken} {sickTaken === 1 ? "day" : "days"}</span>
                 </div>
                 <div className="mt-1.5 h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
                   <div
                     className="h-full rounded-full bg-indigo-600 transition-all duration-300"
-                    style={{ width: `${(remainingSick / 10) * 100}%` }}
+                    style={{ width: `${(sickTaken / maxTaken) * 100}%` }}
                   />
                 </div>
               </div>
 
-              {/* Unpaid leave */}
               <div>
                 <div className="flex justify-between text-xs font-semibold text-slate-700">
                   <span>Unpaid leave</span>
-                  <span className="text-slate-400">{remainingUnpaid} / 5 left</span>
+                  <span className="text-slate-400">{unpaidTaken} {unpaidTaken === 1 ? "day" : "days"}</span>
                 </div>
                 <div className="mt-1.5 h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
                   <div
                     className="h-full rounded-full bg-indigo-600 transition-all duration-300"
-                    style={{ width: `${(remainingUnpaid / 5) * 100}%` }}
+                    style={{ width: `${(unpaidTaken / maxTaken) * 100}%` }}
                   />
                 </div>
               </div>
@@ -369,18 +376,24 @@ export default function Dashboard() {
             </Link>
           </div>
 
-          {/* Alerts panel */}
+          {/* Alerts panel – show pending leave requests as alerts */}
           <div className="rounded-2xl bg-[#EEECFC] p-6 border border-[#E0DCF9]/50">
             <h2 className="text-base font-bold text-indigo-955">Alerts</h2>
             <div className="mt-3.5 flex flex-col gap-3 text-xs leading-relaxed text-indigo-900">
-              <div className="flex gap-2.5">
-                <AlertCircle className="h-4.5 w-4.5 shrink-0 text-indigo-500 mt-0.5" />
-                <p>Your sick leave for 27–28 Aug is awaiting HR approval.</p>
-              </div>
-              <div className="flex gap-2.5">
-                <AlertCircle className="h-4.5 w-4.5 shrink-0 text-indigo-500 mt-0.5" />
-                <p>Wed 19 Aug was logged as a half-day — add a remark if incorrect.</p>
-              </div>
+              {leaves?.filter((l) => l.status === "PENDING").length === 0 && (
+                <p className="text-indigo-700">No pending alerts. You're all caught up!</p>
+              )}
+              {leaves
+                ?.filter((l) => l.status === "PENDING")
+                .slice(0, 3)
+                .map((l) => (
+                  <div key={l.id} className="flex gap-2.5">
+                    <AlertCircle className="h-4.5 w-4.5 shrink-0 text-indigo-500 mt-0.5" />
+                    <p>
+                      Your {l.leaveType.toLowerCase()} leave request ({l.startDate} to {l.endDate}) is awaiting approval.
+                    </p>
+                  </div>
+                ))}
             </div>
           </div>
         </div>
