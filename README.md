@@ -137,7 +137,7 @@ sequenceDiagram
 
 **Employee dashboard**
 
-![](docs/screenshots/employee-dashboard.png)
+![Employee dashboard](docs/screenshots/employee-dashboard.png)
 
 More views (Employee dashboard, Time off, Payroll, Analytics) can be added
 the same way — save an image into [`docs/screenshots/`](docs/screenshots/)
