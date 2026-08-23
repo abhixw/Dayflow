@@ -169,16 +169,68 @@ cd backend && source .venv/bin/activate && python -m scripts.seed
 Full setup (Neon project creation, migrations, running tests, environment
 variables) is documented in [`backend/README.md`](backend/README.md).
 
+## Deployment
+
+Backend and frontend deploy as two independent services — **backend on
+Render**, **frontend on Vercel** — both from this same repo, each pointed
+at its own subfolder.
+
+### Backend → Render
+
+Render reads [`render.yaml`](render.yaml) (a Blueprint) if you create the
+service via **New → Blueprint** and point it at this repo; it already
+declares `rootDir: backend`, builds from `backend/Dockerfile`, and checks
+`/health`. (You can instead create a plain Web Service by hand and set
+Root Directory to `backend` — either works, the blueprint just saves
+re-entering the config.)
+
+Either way, set these in the Render dashboard's Environment tab — the
+blueprint lists them but deliberately leaves the values blank
+(`sync: false`) since they're secrets:
+
+| var | value |
+|---|---|
+| `DATABASE_URL` | your Neon connection string |
+| `JWT_SECRET_KEY` | a real random secret, ≥32 bytes |
+| `CORS_ORIGINS` | your Vercel frontend URL, e.g. `https://dayflow.vercel.app` |
+| `SMTP_HOST` / `SMTP_USERNAME` / `SMTP_PASSWORD` / `SMTP_FROM_EMAIL` | optional — omit to leave email sending skipped/logged |
+
+`COOKIE_SECURE=true` and `COOKIE_SAMESITE=none` are already set as defaults
+in the blueprint — required because the frontend and backend are different
+domains in production, which is cross-site for cookie purposes (unlike
+local dev, where both run on `localhost`).
+
+The container runs `alembic upgrade head` on every deploy before starting
+the server, so there's no separate manual migration step.
+
+### Frontend → Vercel
+
+Create a Vercel project from this repo with **Root Directory set to
+`frontend`**. Vercel auto-detects the Vite build; [`frontend/vercel.json`](frontend/vercel.json)
+adds the one thing it doesn't infer on its own — a rewrite so client-side
+routes (React Router) don't 404 on a direct load or page refresh.
+
+Set in the Vercel dashboard's Environment Variables:
+
+| var | value |
+|---|---|
+| `VITE_API_URL` | your Render backend URL, e.g. `https://dayflow-backend.onrender.com` |
+
+Vite bakes `VITE_API_URL` into the build at build time, so re-deploy after
+changing it.
+
 ## Repository structure
 
 ```
 Dayflow/
 ├── README.md              this file
 ├── docker-compose.yml      runs backend + frontend together for local dev
+├── render.yaml              Render Blueprint for the backend service
 ├── docs/
 │   └── screenshots/         drop app screenshots here
 ├── backend/                 FastAPI + SQLAlchemy + Neon Postgres
 │   └── README.md            full backend docs: setup, schema, API, testing
 └── frontend/                React + Vite + TypeScript
+    ├── vercel.json           SPA rewrite for client-side routing
     └── README.md
 ```

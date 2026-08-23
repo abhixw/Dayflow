@@ -1,0 +1,45 @@
+services:
+  - type: web
+    name: dayflow-backend
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      # Secrets / deployment-specific values — set these in the Render
+      # dashboard (Environment tab). Nothing here is a real value.
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET_KEY
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false # your Vercel frontend URL, e.g. https://dayflow.vercel.app
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_USERNAME
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM_EMAIL
+        sync: false
+
+      # Safe defaults — fine as committed values, override in the dashboard
+      # only if this deployment needs something different.
+      - key: JWT_ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "60"
+      - key: SMTP_PORT
+        value: "587"
+      # Cross-origin cookie requirements: frontend (Vercel) and backend
+      # (Render) are different domains in production, so the cookie needs
+      # SameSite=None (which itself requires Secure=true). Locally these
+      # stay false/lax since everything runs on localhost.
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: COOKIE_SAMESITE
+        value: none
+
+    # TEST_DATABASE_URL is intentionally not set here — pytest doesn't run
+    # on the deployed service, only in CI/local dev.
