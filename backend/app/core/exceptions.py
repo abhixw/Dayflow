@@ -14,6 +14,10 @@ class InactiveUserError(Exception):
     pass
 
 
+class InvalidResetTokenError(Exception):
+    pass
+
+
 class EmployeeNotFoundError(Exception):
     pass
 

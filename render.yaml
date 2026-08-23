@@ -15,6 +15,10 @@ services:
         sync: false
       - key: CORS_ORIGINS
         sync: false # your Vercel frontend URL, e.g. https://dayflow.vercel.app
+      - key: FRONTEND_URL
+        sync: false # same Vercel frontend URL — used to build links in emails (e.g. password reset)
+      - key: BACKEND_URL
+        sync: false # this service's own public URL, e.g. https://dayflow-py0h.onrender.com — used to build links to files it serves (e.g. uploaded profile pictures)
       - key: SMTP_HOST
         sync: false
       - key: SMTP_USERNAME

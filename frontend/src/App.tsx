@@ -5,7 +5,8 @@ import EmployeeLayout from "@/layouts/EmployeeLayout";
 import AdminLayout from "@/layouts/AdminLayout";
 import Login from "@/pages/auth/Login";
 import Signup from "@/pages/auth/Signup";
-import VerifyEmail from "@/pages/auth/VerifyEmail";
+import ForgotPassword from "@/pages/auth/ForgotPassword";
+import ResetPassword from "@/pages/auth/ResetPassword";
 import EmployeeDashboard from "@/pages/employee/Dashboard";
 import EmployeeProfile from "@/pages/employee/Profile";
 import EmployeeAttendance from "@/pages/employee/Attendance";
@@ -38,7 +39,8 @@ export default function App() {
       <Route path="/" element={<RoleHome />} />
       <Route path={ROUTES.login} element={<Login />} />
       <Route path={ROUTES.signup} element={<Signup />} />
-      <Route path={ROUTES.verifyEmail} element={<VerifyEmail />} />
+      <Route path={ROUTES.forgotPassword} element={<ForgotPassword />} />
+      <Route path={ROUTES.resetPassword} element={<ResetPassword />} />
 
       <Route element={<ProtectedRoute />}>
         <Route element={<RoleRoute allow={["EMPLOYEE"]} />}>

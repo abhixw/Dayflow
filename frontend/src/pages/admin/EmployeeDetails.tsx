@@ -114,8 +114,8 @@ export default function EmployeeDetails() {
                     name: employee.name,
                     phone: employee.phone ?? "",
                     address: employee.address ?? "",
-                    department: employee.department,
-                    jobTitle: employee.jobTitle,
+                    department: employee.department ?? "",
+                    jobTitle: employee.jobTitle ?? "",
                     status: employee.status,
                   }}
                   onCancel={() => {

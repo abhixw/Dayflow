@@ -8,7 +8,7 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (payload: LoginPayload) => Promise<User>;
-  signup: (payload: SignupPayload) => Promise<void>;
+  signup: (payload: SignupPayload) => Promise<User>;
   logout: () => Promise<void>;
 }
 
@@ -41,7 +41,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signup = useCallback(async (payload: SignupPayload) => {
-    await authApi.signup(payload);
+    const newUser = await authApi.signup(payload);
+    setUser(newUser);
+    return newUser;
   }, []);
 
   const logout = useCallback(async () => {

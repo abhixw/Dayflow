@@ -24,8 +24,13 @@ export interface SignupPayload {
   name?: string;
 }
 
-export interface VerifyEmailPayload {
+export interface ForgotPasswordPayload {
+  email: string;
+}
+
+export interface ResetPasswordPayload {
   token: string;
+  newPassword: string;
 }
 
 export interface ApiError {

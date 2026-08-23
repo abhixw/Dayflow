@@ -12,7 +12,8 @@ export const PUBLIC_SIGNUP_ROLES = ["EMPLOYEE", "HR"] as const;
 export const ROUTES = {
   login: "/login",
   signup: "/signup",
-  verifyEmail: "/verify-email",
+  forgotPassword: "/forgot-password",
+  resetPassword: "/reset-password",
 
   employeeDashboard: "/employee/dashboard",
   employeeProfile: "/employee/profile",

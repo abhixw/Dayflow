@@ -15,3 +15,7 @@ backend/.venv/
 
 # OS
 .DS_Store
+
+# Uploaded profile pictures (local-disk storage, dev/small-scale only)
+backend/static/uploads/*
+!backend/static/uploads/.gitkeep

@@ -54,6 +54,11 @@ export default function Login() {
         </div>
       )}
       <LoginForm onSubmit={handleSubmit} isSubmitting={isSubmitting} />
+      <p className="mt-4 text-center text-sm text-slate-500">
+        <Link to={ROUTES.forgotPassword} className="font-medium text-brand-600 hover:underline">
+          Forgot password?
+        </Link>
+      </p>
     </AuthLayout>
   );
 }

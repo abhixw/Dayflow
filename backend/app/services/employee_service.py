@@ -91,6 +91,17 @@ async def update_profile_by_admin(
     return _to_out(employee, user)
 
 
+async def set_own_profile_picture(db: AsyncSession, user_id: uuid.UUID, picture_url: str) -> EmployeeOut:
+    employee = await db.scalar(select(Employee).where(Employee.user_id == user_id))
+    if employee is None:
+        raise EmployeeNotFoundError
+    employee.profile_picture = picture_url
+    await db.commit()
+    await db.refresh(employee)
+    user = await db.get(User, user_id)
+    return _to_out(employee, user)
+
+
 async def list_employees(db: AsyncSession) -> list[EmployeeOut]:
     result = await db.execute(
         select(Employee, User).join(User, Employee.user_id == User.id).order_by(Employee.employee_id)

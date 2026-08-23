@@ -4,12 +4,10 @@ import type { Employee, EmployeeAdminUpdatePayload, EmployeeUpdatePayload } from
 export const employeesApi = {
   getMe: () => apiClient.get<Employee>("/api/employees/me"),
   updateMe: (payload: EmployeeUpdatePayload) => apiClient.patch<Employee>("/api/employees/me", payload),
-  // Upload mechanism unconfirmed against the real backend; assumes the same
-  // PATCH endpoint accepts a multipart "profilePicture" field.
   updateMyProfilePicture: (file: File) => {
     const formData = new FormData();
-    formData.append("profilePicture", file);
-    return apiClient.patch<Employee>("/api/employees/me", formData);
+    formData.append("file", file);
+    return apiClient.patch<Employee>("/api/employees/me/profile-picture", formData);
   },
 
   list: () => apiClient.get<Employee[]>("/api/employees"),

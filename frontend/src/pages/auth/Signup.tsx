@@ -5,22 +5,24 @@ import { SignupForm } from "@/components/forms/SignupForm";
 import { Alert } from "@/components/ui/Alert";
 import { useAuth } from "@/hooks/useAuth";
 import { ROUTES } from "@/utils/constants";
-import type { ApiError, SignupPayload } from "@/types/auth";
+import type { ApiError, Role, SignupPayload } from "@/types/auth";
+
+function dashboardForRole(role: Role): string {
+  return role === "EMPLOYEE" ? ROUTES.employeeDashboard : ROUTES.adminDashboard;
+}
 
 export default function Signup() {
   const { signup } = useAuth();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
 
   async function handleSubmit(payload: SignupPayload) {
     setError(null);
     setIsSubmitting(true);
     try {
-      await signup(payload);
-      setSuccess(true);
-      setTimeout(() => navigate(ROUTES.login, { replace: true }), 2000);
+      const user = await signup(payload);
+      navigate(dashboardForRole(user.role), { replace: true });
     } catch (err) {
       const apiError = err as ApiError;
       setError(
@@ -51,13 +53,7 @@ export default function Signup() {
           <Alert variant="error">{error}</Alert>
         </div>
       )}
-      {success ? (
-        <Alert variant="success">
-          Account created. Please check your email to verify your account before signing in.
-        </Alert>
-      ) : (
-        <SignupForm onSubmit={handleSubmit} isSubmitting={isSubmitting} />
-      )}
+      <SignupForm onSubmit={handleSubmit} isSubmitting={isSubmitting} />
     </AuthLayout>
   );
 }

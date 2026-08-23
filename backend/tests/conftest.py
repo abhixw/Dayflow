@@ -9,6 +9,7 @@ from sqlalchemy.pool import NullPool
 from app.core.config import settings
 from app.db.database import get_db
 from app.main import app
+from app.routers.auth import forgot_password_rate_limiter, login_rate_limiter, signup_rate_limiter
 
 if not settings.test_database_url:
     raise RuntimeError(
@@ -26,6 +27,12 @@ async def _override_get_db():
 
 
 app.dependency_overrides[get_db] = _override_get_db
+# The in-memory rate limiter is process-lifetime state; a full test run does
+# far more login/signup calls than a real user would in a minute, so it must
+# be disabled here rather than tuned to fit both real traffic and test load.
+app.dependency_overrides[login_rate_limiter] = lambda: None
+app.dependency_overrides[signup_rate_limiter] = lambda: None
+app.dependency_overrides[forgot_password_rate_limiter] = lambda: None
 
 
 @pytest.fixture(autouse=True)
