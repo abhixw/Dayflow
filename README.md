@@ -135,7 +135,7 @@ sequenceDiagram
 
 ![Login](docs/screenshots/login.png)
 
-**Admin dashboard**
+**Employee dashboard**
 
 ![](docs/screenshots/employee-dashboard.png)
 
