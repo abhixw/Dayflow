@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/common/EmptyState";
 import { employeeStatusTone, formatRole } from "@/utils/formatters";
+import { ROUTES } from "@/utils/constants";
 import type { Employee } from "@/types/employee";
 
 interface EmployeeTableProps {
@@ -44,7 +45,7 @@ export function EmployeeTable({ employees }: EmployeeTableProps) {
               </td>
               <td className="whitespace-nowrap px-4 py-3">
                 <Link
-                  to={`/admin/employees/${employee.employeeId}`}
+                  to={`${ROUTES.adminEmployees}/${employee.employeeId}`}
                   className="font-medium text-brand-600 hover:underline"
                 >
                   View

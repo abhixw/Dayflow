@@ -11,6 +11,7 @@ import { ErrorState } from "@/components/common/ErrorState";
 import { EmployeeForm } from "@/components/forms/EmployeeForm";
 import { useEmployee, useEmployeesList, useUpdateEmployee } from "@/hooks/useEmployees";
 import { employeeStatusTone, formatDate, formatRole } from "@/utils/formatters";
+import { ROUTES } from "@/utils/constants";
 import type { ApiError } from "@/types/auth";
 import type { EmployeeAdminUpdatePayload } from "@/types/employee";
 
@@ -51,7 +52,7 @@ export default function EmployeeDetails() {
           <Select
             label="Switch employee"
             value={employeeId}
-            onChange={(e) => navigate(`/admin/employees/${e.target.value}`)}
+            onChange={(e) => navigate(`${ROUTES.adminEmployees}/${e.target.value}`)}
             className="sm:w-64"
           >
             {employees.map((emp) => (

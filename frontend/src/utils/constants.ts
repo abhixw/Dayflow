@@ -23,11 +23,11 @@ export const ROUTES = {
   employeeNotifications: "/employee/notifications",
   employeeAnalytics: "/employee/analytics",
 
-  adminDashboard: "/admin/dashboard",
-  adminEmployees: "/admin/employees",
-  adminAttendance: "/admin/attendance",
-  adminLeaves: "/admin/leaves",
-  adminPayroll: "/admin/payroll",
-  adminNotifications: "/admin/notifications",
-  adminAnalytics: "/admin/analytics",
+  adminDashboard: "/management/dashboard",
+  adminEmployees: "/management/employees",
+  adminAttendance: "/management/attendance",
+  adminLeaves: "/management/leaves",
+  adminPayroll: "/management/payroll",
+  adminNotifications: "/management/notifications",
+  adminAnalytics: "/management/analytics",
 } as const;
