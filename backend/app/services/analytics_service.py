@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import EmployeeNotFoundError
 from app.models.attendance import Attendance
 from app.models.employee import Employee
-from app.models.enums import AttendanceStatus, LeaveStatus, LeaveType
+from app.models.enums import AttendanceStatus, LeaveStatus, LeaveType, Role
 from app.models.leave import Leave
 from app.models.payroll import Payroll
 from app.models.user import User
@@ -139,14 +139,28 @@ async def get_employee_analytics(
 
 
 async def _employee_statistics(db: AsyncSession) -> EmployeeStatistics:
-    total = await db.scalar(select(func.count()).select_from(Employee))
+    # Scoped to EMPLOYEE-role accounts only — this represents the managed
+    # workforce, not HR/Admin headcount (matches employee_service.list_employees).
+    total = await db.scalar(
+        select(func.count())
+        .select_from(Employee)
+        .join(User, Employee.user_id == User.id)
+        .where(User.role == Role.EMPLOYEE)
+    )
     active = await db.scalar(
         select(func.count())
         .select_from(Employee)
         .join(User, Employee.user_id == User.id)
-        .where(User.is_active.is_(True))
+        .where(User.role == Role.EMPLOYEE, User.is_active.is_(True))
     )
-    dept_rows = (await db.execute(select(Employee.department, func.count()).group_by(Employee.department))).all()
+    dept_rows = (
+        await db.execute(
+            select(Employee.department, func.count())
+            .join(User, Employee.user_id == User.id)
+            .where(User.role == Role.EMPLOYEE)
+            .group_by(Employee.department)
+        )
+    ).all()
     department_distribution = [
         DepartmentCount(department=department or "Unassigned", count=count) for department, count in dept_rows
     ]

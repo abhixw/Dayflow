@@ -87,8 +87,10 @@ async def test_admin_analytics_reflects_org_wide_data(client_factory):
     response = await hr_client.get("/api/analytics/admin")
     assert response.status_code == 200
     body = response.json()
-    assert body["employees"]["totalEmployees"] == 2
-    assert body["employees"]["activeEmployees"] == 2
+    # Only the EMPLOYEE-role signup counts — HR/Admin aren't part of the
+    # managed workforce these stats represent.
+    assert body["employees"]["totalEmployees"] == 1
+    assert body["employees"]["activeEmployees"] == 1
     assert body["attendance"]["total"] == 1
     assert body["leave"]["total"] == 1
     assert body["leave"]["paid"] == 1

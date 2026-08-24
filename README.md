@@ -172,7 +172,7 @@ Screenshots use demo/placeholder data only.
 
 **Employee dashboard**
 
-![Employee dashboard](docs/screenshots/employee-dashboard.png)
+![Employee dashboard](docs/screenshots/hr-dashboard.png)
 
 Additional views (profile, attendance, leave management, payroll,
 notifications, HR/Admin dashboard, analytics) aren't captured yet. To add
