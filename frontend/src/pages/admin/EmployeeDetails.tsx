@@ -9,17 +9,18 @@ import { Select } from "@/components/ui/Select";
 import { LoadingState } from "@/components/common/LoadingState";
 import { ErrorState } from "@/components/common/ErrorState";
 import { EmployeeForm } from "@/components/forms/EmployeeForm";
+import { WorkJourney } from "@/components/common/WorkJourney";
 import { useEmployee, useEmployeesList, useUpdateEmployee } from "@/hooks/useEmployees";
 import { employeeStatusTone, formatDate, formatRole } from "@/utils/formatters";
 import { ROUTES } from "@/utils/constants";
 import type { ApiError } from "@/types/auth";
 import type { EmployeeAdminUpdatePayload } from "@/types/employee";
 
-function ReadOnlyField({ label, value }: { label: string; value: string }) {
+function ReadOnlyField({ label, value, emptyText }: { label: string; value: string; emptyText?: string }) {
   return (
     <div>
       <p className="text-xs font-medium text-slate-500">{label}</p>
-      <p className="mt-1 text-sm text-slate-900">{value || "—"}</p>
+      <p className="mt-1 text-sm text-slate-900">{value || <span className="text-slate-400">{emptyText ?? "—"}</span>}</p>
     </div>
   );
 }
@@ -73,7 +74,7 @@ export default function EmployeeDetails() {
             <div>
               <p className="text-lg font-semibold text-slate-900">{employee.name}</p>
               <p className="text-sm text-slate-500">
-                {employee.jobTitle} · {employee.department}
+                {employee.jobTitle || "Job title not assigned"} · {employee.department || "Department not assigned"}
               </p>
             </div>
             <Badge tone={employeeStatusTone(employee.status)}>
@@ -90,6 +91,8 @@ export default function EmployeeDetails() {
               <ReadOnlyField label="Joining date" value={formatDate(employee.joiningDate)} />
             </div>
           </Card>
+
+          <WorkJourney joiningDate={employee.joiningDate} />
 
           <Card className="p-6">
             <div className="flex items-center justify-between">
@@ -129,10 +132,10 @@ export default function EmployeeDetails() {
                 />
               ) : (
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <ReadOnlyField label="Phone" value={employee.phone ?? ""} />
-                  <ReadOnlyField label="Address" value={employee.address ?? ""} />
-                  <ReadOnlyField label="Department" value={employee.department} />
-                  <ReadOnlyField label="Job title" value={employee.jobTitle} />
+                  <ReadOnlyField label="Phone" value={employee.phone ?? ""} emptyText="Not provided" />
+                  <ReadOnlyField label="Address" value={employee.address ?? ""} emptyText="Not provided" />
+                  <ReadOnlyField label="Department" value={employee.department} emptyText="Department not assigned" />
+                  <ReadOnlyField label="Job title" value={employee.jobTitle} emptyText="Job title not assigned" />
                 </div>
               )}
             </div>
