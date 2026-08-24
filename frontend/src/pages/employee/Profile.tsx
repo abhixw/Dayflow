@@ -5,17 +5,18 @@ import { Button } from "@/components/ui/Button";
 import { Alert } from "@/components/ui/Alert";
 import { LoadingState } from "@/components/common/LoadingState";
 import { ErrorState } from "@/components/common/ErrorState";
+import { WorkJourney } from "@/components/common/WorkJourney";
 import { ProfileForm } from "@/components/forms/ProfileForm";
 import { useMe, useUpdateMe, useUpdateMyProfilePicture } from "@/hooks/useEmployees";
 import { formatDate, formatRole } from "@/utils/formatters";
 import type { ApiError } from "@/types/auth";
 import type { EmployeeUpdatePayload } from "@/types/employee";
 
-function ReadOnlyField({ label, value }: { label: string; value: string }) {
+function ReadOnlyField({ label, value, emptyText }: { label: string; value: string; emptyText?: string }) {
   return (
     <div>
       <p className="text-xs font-medium text-slate-500">{label}</p>
-      <p className="mt-1 text-sm text-slate-900">{value || "—"}</p>
+      <p className="mt-1 text-sm text-slate-900">{value || <span className="text-slate-400">{emptyText ?? "—"}</span>}</p>
     </div>
   );
 }
@@ -31,7 +32,7 @@ export default function Profile() {
   const [pictureError, setPictureError] = useState<string | null>(null);
 
   if (isLoading) {
-    return <LoadingState label="Loading profile..." />;
+    return <LoadingState label="Loading your profile..." />;
   }
 
   if (isError || !employee) {
@@ -70,6 +71,16 @@ export default function Profile() {
     }
   }
 
+  // About Me — built entirely from real fields; each piece is omitted, not
+  // faked, when the underlying data isn't set.
+  const jobLine = employee.jobTitle && employee.department
+    ? `${employee.name} is a ${employee.jobTitle} in the ${employee.department} department.`
+    : employee.jobTitle
+      ? `${employee.name} is a ${employee.jobTitle}.`
+      : employee.department
+        ? `${employee.name} is part of the ${employee.department} department.`
+        : `${employee.name}'s job details haven't been set up yet.`;
+
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-semibold text-slate-900">Profile</h1>
@@ -91,7 +102,7 @@ export default function Profile() {
         <div className="flex-1">
           <p className="text-lg font-semibold text-slate-900">{employee.name}</p>
           <p className="text-sm text-slate-500">
-            {employee.jobTitle} · {employee.department}
+            {employee.jobTitle || "Job title not assigned"} · {employee.department || "Department not assigned"}
           </p>
         </div>
         <div className="flex flex-col items-end gap-1">
@@ -116,13 +127,31 @@ export default function Profile() {
       {pictureError && <Alert variant="error">{pictureError}</Alert>}
 
       <Card className="p-6">
+        <h2 className="text-base font-semibold text-slate-900">About me</h2>
+        <p className="mt-3 text-sm leading-relaxed text-slate-700">{jobLine}</p>
+        <div className="mt-3 flex flex-col gap-1 text-sm text-slate-500">
+          <p>
+            Joined Dayflow:{" "}
+            {employee.joiningDate ? (
+              <span className="text-slate-700">{formatDate(employee.joiningDate)}</span>
+            ) : (
+              <span className="text-slate-400">Joining date not available</span>
+            )}
+          </p>
+          {employee.address && <p>Location: <span className="text-slate-700">{employee.address}</span></p>}
+        </div>
+      </Card>
+
+      <WorkJourney joiningDate={employee.joiningDate} />
+
+      <Card className="p-6">
         <h2 className="text-base font-semibold text-slate-900">Job details</h2>
         <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <ReadOnlyField label="Employee ID" value={employee.employeeId} />
           <ReadOnlyField label="Role" value={formatRole(employee.role)} />
-          <ReadOnlyField label="Department" value={employee.department} />
-          <ReadOnlyField label="Job title" value={employee.jobTitle} />
-          <ReadOnlyField label="Joining date" value={formatDate(employee.joiningDate)} />
+          <ReadOnlyField label="Department" value={employee.department} emptyText="Department not assigned" />
+          <ReadOnlyField label="Job title" value={employee.jobTitle} emptyText="Job title not assigned" />
+          <ReadOnlyField label="Joining date" value={formatDate(employee.joiningDate)} emptyText="Joining date not available" />
           <ReadOnlyField label="Email" value={employee.email} />
         </div>
       </Card>
@@ -157,8 +186,8 @@ export default function Profile() {
             />
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <ReadOnlyField label="Phone" value={employee.phone ?? ""} />
-              <ReadOnlyField label="Address" value={employee.address ?? ""} />
+              <ReadOnlyField label="Phone" value={employee.phone ?? ""} emptyText="Not provided" />
+              <ReadOnlyField label="Address" value={employee.address ?? ""} emptyText="Not provided" />
             </div>
           )}
         </div>

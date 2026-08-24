@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Clock, Calendar, FileText, Wallet, ArrowUpRight, User, AlertCircle, CheckSquare } from "lucide-react";
+import { WorkJourney } from "@/components/common/WorkJourney";
 import { useMe } from "@/hooks/useEmployees";
 import { useMyAttendance, useCheckIn, useCheckOut } from "@/hooks/useAttendance";
 import { useMyAnalytics } from "@/hooks/useAnalytics";
 import { useMyLeaves } from "@/hooks/useLeaves";
 import { ROUTES } from "@/utils/constants";
-import { formatTime, toISODate, todayISODate } from "@/utils/formatters";
+import { formatDate, formatTime, toISODate, todayISODate } from "@/utils/formatters";
+import { computeWorkJourney, formatTenure } from "@/utils/workJourney";
 import type { ApiError } from "@/types/auth";
 
 export default function Dashboard() {
@@ -58,17 +60,13 @@ export default function Dashboard() {
     }
   }
 
-  // Calculate dynamic weekly hours and working days
+  // Calculate dynamic weekly hours
   let totalHours = 0;
-  let loggedDaysCount = 0;
   attendanceRecords?.forEach((r) => {
-    if (r.checkIn) {
-      loggedDaysCount++;
-      if (r.checkOut) {
-        const diffMs = new Date(r.checkOut).getTime() - new Date(r.checkIn).getTime();
-        const diffHrs = Math.max(0, diffMs / (1000 * 60 * 60));
-        totalHours += diffHrs;
-      }
+    if (r.checkIn && r.checkOut) {
+      const diffMs = new Date(r.checkOut).getTime() - new Date(r.checkIn).getTime();
+      const diffHrs = Math.max(0, diffMs / (1000 * 60 * 60));
+      totalHours += diffHrs;
     }
   });
 
@@ -91,6 +89,13 @@ export default function Dashboard() {
   const maxTaken = Math.max(paidTaken, sickTaken, unpaidTaken, 1);
   const pendingLeaveCount = leaves?.filter((l) => l.status === "PENDING").length ?? 0;
 
+  // "Upcoming" = your own pending requests (awaiting a decision) plus any
+  // approved leave that hasn't started yet — both are real, not fabricated.
+  const upcomingLeaves = (leaves ?? [])
+    .filter((l) => l.status === "PENDING" || (l.status === "APPROVED" && l.startDate >= todayISODate()))
+    .sort((a, b) => a.startDate.localeCompare(b.startDate))
+    .slice(0, 3);
+
   // Formatting helpers
   const formatHeaderDate = () => {
     const now = new Date();
@@ -100,6 +105,15 @@ export default function Dashboard() {
     const yearNum = now.getFullYear();
     return `${dayName}, ${dayNum} ${monthName} ${yearNum}`;
   };
+
+  const greeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 17) return "Good afternoon";
+    return "Good evening";
+  };
+
+  const journey = computeWorkJourney(employee?.joiningDate);
 
   const formatSalary = (salary: number | undefined | null) => {
     if (salary === undefined || salary === null) return "—";
@@ -157,11 +171,22 @@ export default function Dashboard() {
             {isEmployeeLoading ? (
               <span className="inline-block h-9 w-48 animate-pulse rounded bg-slate-200" />
             ) : (
-              `Hello, ${employee?.name?.split(" ")[0] ?? "there"}`
+              `${greeting()}, ${employee?.name?.split(" ")[0] ?? "there"}`
             )}
           </h1>
           <p className="mt-1.5 text-sm font-medium text-slate-500">
-            {formatHeaderDate()}{employee?.department ? ` · ${employee.department}` : ""}
+            {employee?.jobTitle || employee?.department ? (
+              <>
+                {employee?.jobTitle || "Job title not assigned"}
+                {employee?.department ? ` · ${employee.department}` : " · Department not assigned"}
+              </>
+            ) : (
+              formatHeaderDate()
+            )}
+          </p>
+          <p className="mt-0.5 text-xs text-slate-400">
+            {formatHeaderDate()}
+            {employee?.joiningDate ? ` · Joined ${formatDate(employee.joiningDate)}` : ""}
           </p>
         </div>
 
@@ -206,18 +231,20 @@ export default function Dashboard() {
 
       {/* Top row cards */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Card 1: This week */}
+        {/* Card 1: Experience (from joining_date — never hard-coded) */}
         <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm flex flex-col justify-between h-40">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-            <Clock className="h-4.5 w-4.5" />
+            <User className="h-4.5 w-4.5" />
           </div>
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">This week</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Experience</p>
             <p className="mt-1 text-3xl font-bold tracking-tight text-slate-900">
-              {totalHours > 0 ? `${totalHours.toFixed(1)} h` : "—"}
+              {journey.status === "active" ? formatTenure(journey.tenure) : "—"}
             </p>
             <p className="mt-1 text-xs text-slate-400">
-              Across {loggedDaysCount > 0 ? loggedDaysCount : "—"} working days
+              {journey.status === "missing" && "Joining date not available"}
+              {journey.status === "future" && `Starts ${formatDate(journey.joiningDate)}`}
+              {journey.status === "active" && `This week: ${totalHours > 0 ? `${totalHours.toFixed(1)}h` : "—"}`}
             </p>
           </div>
         </div>
@@ -320,8 +347,10 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Right Column: Leave Balance & Alerts */}
+        {/* Right Column: Work Journey, Leave Balance, Upcoming */}
         <div className="flex flex-col gap-6">
+          <WorkJourney joiningDate={employee?.joiningDate} />
+
           {/* Leave taken by type — bars are relative to each other (whichever
               type has the most approved days), not against any allowance,
               since the backend has no leave-balance concept. */}
@@ -376,24 +405,22 @@ export default function Dashboard() {
             </Link>
           </div>
 
-          {/* Alerts panel – show pending leave requests as alerts */}
+          {/* Upcoming – your own pending requests + approved leave not yet started */}
           <div className="rounded-2xl bg-[#EEECFC] p-6 border border-[#E0DCF9]/50">
-            <h2 className="text-base font-bold text-indigo-955">Alerts</h2>
+            <h2 className="text-base font-bold text-indigo-955">Upcoming</h2>
             <div className="mt-3.5 flex flex-col gap-3 text-xs leading-relaxed text-indigo-900">
-              {leaves?.filter((l) => l.status === "PENDING").length === 0 && (
-                <p className="text-indigo-700">No pending alerts. You're all caught up!</p>
+              {upcomingLeaves.length === 0 && (
+                <p className="text-indigo-700">Nothing upcoming. You're all caught up!</p>
               )}
-              {leaves
-                ?.filter((l) => l.status === "PENDING")
-                .slice(0, 3)
-                .map((l) => (
-                  <div key={l.id} className="flex gap-2.5">
-                    <AlertCircle className="h-4.5 w-4.5 shrink-0 text-indigo-500 mt-0.5" />
-                    <p>
-                      Your {l.leaveType.toLowerCase()} leave request ({l.startDate} to {l.endDate}) is awaiting approval.
-                    </p>
-                  </div>
-                ))}
+              {upcomingLeaves.map((l) => (
+                <div key={l.id} className="flex gap-2.5">
+                  <AlertCircle className="h-4.5 w-4.5 shrink-0 text-indigo-500 mt-0.5" />
+                  <p>
+                    Your {l.leaveType.toLowerCase()} leave ({formatDate(l.startDate)} to {formatDate(l.endDate)}){" "}
+                    {l.status === "PENDING" ? "is awaiting approval." : "is coming up."}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
         </div>

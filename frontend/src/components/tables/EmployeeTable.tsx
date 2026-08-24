@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/common/EmptyState";
-import { employeeStatusTone, formatRole } from "@/utils/formatters";
+import { employeeStatusTone, formatDate, formatRole } from "@/utils/formatters";
 import { ROUTES } from "@/utils/constants";
 import type { Employee } from "@/types/employee";
 
@@ -24,6 +24,7 @@ export function EmployeeTable({ employees }: EmployeeTableProps) {
             <th className="px-4 py-3 text-left font-medium text-slate-500">Role</th>
             <th className="px-4 py-3 text-left font-medium text-slate-500">Department</th>
             <th className="px-4 py-3 text-left font-medium text-slate-500">Job Title</th>
+            <th className="px-4 py-3 text-left font-medium text-slate-500">Joining Date</th>
             <th className="px-4 py-3 text-left font-medium text-slate-500">Email</th>
             <th className="px-4 py-3 text-left font-medium text-slate-500">Status</th>
             <th className="px-4 py-3 text-left font-medium text-slate-500">Actions</th>
@@ -37,6 +38,7 @@ export function EmployeeTable({ employees }: EmployeeTableProps) {
               <td className="whitespace-nowrap px-4 py-3 text-slate-600">{formatRole(employee.role)}</td>
               <td className="whitespace-nowrap px-4 py-3 text-slate-600">{employee.department}</td>
               <td className="whitespace-nowrap px-4 py-3 text-slate-600">{employee.jobTitle}</td>
+              <td className="whitespace-nowrap px-4 py-3 text-slate-600">{formatDate(employee.joiningDate)}</td>
               <td className="whitespace-nowrap px-4 py-3 text-slate-600">{employee.email}</td>
               <td className="whitespace-nowrap px-4 py-3">
                 <Badge tone={employeeStatusTone(employee.status)}>
