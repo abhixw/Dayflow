@@ -24,7 +24,14 @@ a React + Vite + TypeScript single-page app.
 - Employees can view and edit their own contact details and upload a
   profile picture
 - HR/Admin manage full employee records: name, job title, department,
-  employment status
+  joining date, employment status
+- Personalized employee dashboard and profile: a time-aware greeting with
+  job title/department/joining date, a real "Work Journey" card (tenure
+  and next work-anniversary, calculated from the actual joining date —
+  never hard-coded), and an "About Me" summary built from real profile
+  fields
+- HR/Admin employee directory: search, plus filter by department, job
+  title, and status, and sort by joining date
 
 **Attendance**
 - Employees check in/out and view their own daily and weekly history
@@ -410,6 +417,16 @@ Password reset, rate limiting, and profile-picture upload are recent
 additions without dedicated automated test coverage yet; they've been
 exercised manually. Test emails are never sent for real — outbound SMTP
 is mocked for the whole test session.
+
+```bash
+cd frontend
+npm test
+```
+
+12 Vitest unit tests cover the Work Journey tenure/anniversary math:
+missing joining date, a future joining date, the exact one-year boundary,
+and a leap-year joining date. This is currently the only frontend logic
+with dedicated test coverage.
 
 ## Performance
 
