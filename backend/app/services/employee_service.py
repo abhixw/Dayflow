@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import EmployeeNotFoundError
 from app.models.employee import Employee
+from app.models.enums import Role
 from app.models.user import User
 from app.schemas.employee import EmployeeAdminUpdate, EmployeeOut, EmployeeSelfUpdate
 
@@ -103,7 +104,13 @@ async def set_own_profile_picture(db: AsyncSession, user_id: uuid.UUID, picture_
 
 
 async def list_employees(db: AsyncSession) -> list[EmployeeOut]:
+    # Excludes HR/Admin accounts — this list is the managed workforce, not
+    # the people managing it. HR/Admin can still be looked up individually
+    # by employee code via get_profile_by_employee_code if ever needed.
     result = await db.execute(
-        select(Employee, User).join(User, Employee.user_id == User.id).order_by(Employee.employee_id)
+        select(Employee, User)
+        .join(User, Employee.user_id == User.id)
+        .where(User.role == Role.EMPLOYEE)
+        .order_by(Employee.employee_id)
     )
     return [_to_out(employee, user) for employee, user in result.all()]
