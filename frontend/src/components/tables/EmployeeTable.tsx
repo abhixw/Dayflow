@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/common/EmptyState";
-import { employeeStatusTone } from "@/utils/formatters";
+import { employeeStatusTone, formatRole } from "@/utils/formatters";
 import type { Employee } from "@/types/employee";
 
 interface EmployeeTableProps {
@@ -20,6 +20,7 @@ export function EmployeeTable({ employees }: EmployeeTableProps) {
           <tr>
             <th className="px-4 py-3 text-left font-medium text-slate-500">Employee ID</th>
             <th className="px-4 py-3 text-left font-medium text-slate-500">Name</th>
+            <th className="px-4 py-3 text-left font-medium text-slate-500">Role</th>
             <th className="px-4 py-3 text-left font-medium text-slate-500">Department</th>
             <th className="px-4 py-3 text-left font-medium text-slate-500">Job Title</th>
             <th className="px-4 py-3 text-left font-medium text-slate-500">Email</th>
@@ -32,6 +33,7 @@ export function EmployeeTable({ employees }: EmployeeTableProps) {
             <tr key={employee.employeeId}>
               <td className="whitespace-nowrap px-4 py-3 text-slate-900">{employee.employeeId}</td>
               <td className="whitespace-nowrap px-4 py-3 text-slate-900">{employee.name}</td>
+              <td className="whitespace-nowrap px-4 py-3 text-slate-600">{formatRole(employee.role)}</td>
               <td className="whitespace-nowrap px-4 py-3 text-slate-600">{employee.department}</td>
               <td className="whitespace-nowrap px-4 py-3 text-slate-600">{employee.jobTitle}</td>
               <td className="whitespace-nowrap px-4 py-3 text-slate-600">{employee.email}</td>
