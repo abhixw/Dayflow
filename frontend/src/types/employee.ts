@@ -30,5 +30,6 @@ export interface EmployeeAdminUpdatePayload {
   address?: string;
   department?: string;
   jobTitle?: string;
+  joiningDate?: string;
   status?: EmployeeStatus;
 }

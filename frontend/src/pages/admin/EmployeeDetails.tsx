@@ -117,6 +117,7 @@ export default function EmployeeDetails() {
                     address: employee.address ?? "",
                     department: employee.department ?? "",
                     jobTitle: employee.jobTitle ?? "",
+                    joiningDate: employee.joiningDate ?? "",
                     status: employee.status,
                   }}
                   onCancel={() => {
