@@ -61,16 +61,23 @@ export default function Payroll() {
 
       {employeeId && isLoading && <LoadingState label="Loading payroll..." />}
 
-      {employeeId && isError && isNotFound && (
-        <EmptyState message="No payroll information set up for this employee yet." />
+      {employeeId && isError && isNotFound && !isEditing && (
+        <EmptyState
+          message="No payroll information set up for this employee yet."
+          action={
+            <Button type="button" onClick={() => setIsEditing(true)}>
+              Set Salary Structure
+            </Button>
+          }
+        />
       )}
       {employeeId && isError && !isNotFound && (
         <ErrorState message="Unable to load payroll." onRetry={() => refetch()} />
       )}
 
-      {employeeId && !isLoading && !isError && payroll && (
+      {employeeId && !isLoading && (isNotFound || payroll) && (
         <>
-          {!isEditing && (
+          {!isEditing && payroll && (
             <>
               <PayrollSummary payroll={payroll} />
               <div>
@@ -84,7 +91,9 @@ export default function Payroll() {
 
           {isEditing && (
             <Card className="p-6">
-              <h2 className="text-base font-semibold text-slate-900">Edit salary structure</h2>
+              <h2 className="text-base font-semibold text-slate-900">
+                {payroll ? "Edit salary structure" : "Set salary structure"}
+              </h2>
 
               {saveError && (
                 <div className="mt-4">
@@ -95,11 +104,11 @@ export default function Payroll() {
               <div className="mt-4">
                 <PayrollForm
                   defaultValues={{
-                    basicSalary: payroll.basicSalary,
-                    allowances: payroll.allowances,
-                    deductions: payroll.deductions,
-                    grossSalary: payroll.grossSalary,
-                    netSalary: payroll.netSalary,
+                    basicSalary: payroll?.basicSalary ?? 0,
+                    allowances: payroll?.allowances ?? 0,
+                    deductions: payroll?.deductions ?? 0,
+                    grossSalary: payroll?.grossSalary ?? 0,
+                    netSalary: payroll?.netSalary ?? 0,
                   }}
                   onCancel={() => {
                     setIsEditing(false);
