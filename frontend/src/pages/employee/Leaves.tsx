@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Plus } from "lucide-react";
-import { Card } from "@/components/ui/Card";
+import { Plus, CalendarClock, CheckCircle2, XCircle, Hourglass } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Alert } from "@/components/ui/Alert";
 import { Modal } from "@/components/ui/Modal";
+import { StatTile } from "@/components/common/StatTile";
 import { LoadingState } from "@/components/common/LoadingState";
 import { ErrorState } from "@/components/common/ErrorState";
 import { EmptyState } from "@/components/common/EmptyState";
@@ -59,18 +59,23 @@ function LeaveListItem({ leave, onSelect }: { leave: LeaveRequest; onSelect: () 
   return (
     <button
       onClick={onSelect}
-      className="w-full text-left"
+      className="group w-full text-left"
       aria-label={`View details for ${formatLeaveType(leave.leaveType)} request`}
     >
-      <Card className="flex items-center justify-between p-4 transition-shadow hover:shadow-md">
-        <div>
-          <p className="text-sm font-semibold text-slate-900">{formatLeaveType(leave.leaveType)}</p>
-          <p className="mt-0.5 text-xs text-slate-500">
-            {formatDate(leave.startDate)} → {formatDate(leave.endDate)}
-          </p>
+      <div className="flex items-center justify-between rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-100 hover:shadow-md">
+        <div className="flex items-center gap-4">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600 transition-colors group-hover:bg-brand-100">
+            <CalendarClock className="h-4.5 w-4.5" aria-hidden="true" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-slate-900">{formatLeaveType(leave.leaveType)}</p>
+            <p className="mt-0.5 text-xs text-slate-400">
+              {formatDate(leave.startDate)} → {formatDate(leave.endDate)}
+            </p>
+          </div>
         </div>
         <Badge tone={leaveStatusTone(leave.status)}>{formatLeaveStatus(leave.status)}</Badge>
-      </Card>
+      </div>
     </button>
   );
 }
@@ -83,6 +88,10 @@ export default function Leaves() {
   const [selectedLeave, setSelectedLeave] = useState<LeaveRequest | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  const pendingCount = leaves?.filter((l) => l.status === "PENDING").length ?? 0;
+  const approvedCount = leaves?.filter((l) => l.status === "APPROVED").length ?? 0;
+  const rejectedCount = leaves?.filter((l) => l.status === "REJECTED").length ?? 0;
+
   async function handleCreate(payload: CreateLeavePayload) {
     setSubmitError(null);
     try {
@@ -94,12 +103,18 @@ export default function Leaves() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-900">Leave Requests</h1>
-        <Button onClick={() => setIsApplyOpen(true)}>
+    <div className="flex flex-col gap-6 pb-12">
+      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+        <div>
+          <h1 className="font-display text-3xl font-bold tracking-tight text-[#0B091A]">Time off</h1>
+          <p className="mt-1.5 text-sm font-medium text-slate-500">Apply for leave and track your requests.</p>
+        </div>
+        <Button
+          onClick={() => setIsApplyOpen(true)}
+          className="rounded-xl px-5 py-2.5 shadow-lg shadow-brand-600/20"
+        >
           <Plus className="h-4 w-4" aria-hidden="true" />
-          Apply for Leave
+          Apply for leave
         </Button>
       </div>
 
@@ -109,11 +124,19 @@ export default function Leaves() {
       {!isLoading && !isError && (
         <>
           {leaves && leaves.length > 0 ? (
-            <div className="flex flex-col gap-3">
-              {leaves.map((leave) => (
-                <LeaveListItem key={leave.id} leave={leave} onSelect={() => setSelectedLeave(leave)} />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+                <StatTile icon={Hourglass} label="Pending" value={pendingCount} sublabel="Awaiting review" />
+                <StatTile icon={CheckCircle2} label="Approved" value={approvedCount} sublabel="All time" />
+                <StatTile icon={XCircle} label="Rejected" value={rejectedCount} sublabel="All time" />
+              </div>
+
+              <div className="flex flex-col gap-3">
+                {leaves.map((leave) => (
+                  <LeaveListItem key={leave.id} leave={leave} onSelect={() => setSelectedLeave(leave)} />
+                ))}
+              </div>
+            </>
           ) : (
             <EmptyState
               message="No leave requests yet."

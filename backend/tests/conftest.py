@@ -1,4 +1,6 @@
 import contextlib
+import smtplib
+from unittest.mock import MagicMock
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -33,6 +35,16 @@ app.dependency_overrides[get_db] = _override_get_db
 app.dependency_overrides[login_rate_limiter] = lambda: None
 app.dependency_overrides[signup_rate_limiter] = lambda: None
 app.dependency_overrides[forgot_password_rate_limiter] = lambda: None
+
+
+@pytest.fixture(autouse=True)
+def _no_real_email(monkeypatch):
+    """Leave/payroll flows send real emails via smtplib. Tests use fixture
+    addresses like leave.employee@example.com that don't exist, so without
+    this, every test run bounces real mail back to whatever inbox SMTP_*
+    is configured with. Patch at the smtplib.SMTP boundary so it's true
+    regardless of how/where email_service.send_email is imported."""
+    monkeypatch.setattr(smtplib, "SMTP", MagicMock())
 
 
 @pytest.fixture(autouse=True)
