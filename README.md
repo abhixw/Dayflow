@@ -174,10 +174,14 @@ Screenshots use demo/placeholder data only.
 
 ![HR dashboard](docs/screenshots/hr-dashboard.png)
 
-Additional views (employee dashboard, profile, attendance, leave
-management, payroll, notifications, analytics) aren't captured yet. To
-add one, drop an image into [`docs/screenshots/`](docs/screenshots/) and
-reference it here the same way.
+**Employee dashboard**
+
+![Employee dashboard](docs/screenshots/employee-dashboard.png)
+
+Additional views (profile, attendance, leave management, payroll,
+notifications, analytics) aren't captured yet. To add one, drop an image
+into [`docs/screenshots/`](docs/screenshots/) and reference it here the
+same way.
 
 ## Database schema
 
