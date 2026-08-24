@@ -170,13 +170,13 @@ Screenshots use demo/placeholder data only.
 
 ![Login](docs/screenshots/login.png)
 
-**Employee dashboard**
+**HR dashboard**
 
-![Employee dashboard](docs/screenshots/hr-dashboard.png)
+![HR dashboard](docs/screenshots/hr-dashboard.png)
 
-Additional views (profile, attendance, leave management, payroll,
-notifications, HR/Admin dashboard, analytics) aren't captured yet. To add
-one, drop an image into [`docs/screenshots/`](docs/screenshots/) and
+Additional views (employee dashboard, profile, attendance, leave
+management, payroll, notifications, analytics) aren't captured yet. To
+add one, drop an image into [`docs/screenshots/`](docs/screenshots/) and
 reference it here the same way.
 
 ## Database schema
